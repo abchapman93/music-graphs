@@ -96,3 +96,18 @@ HANDOFF:
 ## Close-out
 
 Commit on `sprint/graph-view` with subject `feat: graph view UI + API routes + fixture graph`. Brief summary noting whether the integration check passed cleanly.
+
+---
+
+HANDOFF:
+- Routes implemented: GET / (home, real list_graphs data), GET /graph/<slug>, GET /api/graph/<slug>, GET /api/card/<graph_slug>/<card_slug>, GET /graph/<slug>/card/<card_slug>. Still stubbed: /cards (Track G).
+- Fixture graph: graphs/pittsburgh-jazz-fixture/ (5 cards: location-pittsburgh, person-stanley-turrentine, person-earl-hines, album-sugar, track-sugar-track; 5 edges after undirected dedup).
+- Vis-network config: physics enabled (forceAtlas2Based, springLength=120), hierarchical disabled, groups configured per spec (person/group/album/track/song/location/genre/note/memory) by shape+color. Initial load focuses first node and auto-fetches its card.
+- Spotify embed wiring: spotify_embed_url() called inside /api/card route (and in card_view server-render path) on frontmatter.spotify_url. lib/cards.py left untouched. Payload also exposes spotify_kind so the template/JS can pick a 152px (track) vs 352px (album/playlist/show) iframe height.
+- Integration check results (server run on alt port 8767 because 8766 was occupied by another track's app): /api/graph/<fixture> returns nodes+edges JSON; /api/card/<fixture>/sugar returns spotify_embed_url = https://open.spotify.com/embed/album/3hARuIUZqAIAKSuNvW5dGh; /graph/<fixture> returns 200; /api/graph/does-not-exist returns 404. Full curl outputs appended to /tmp/test_results_track-E.txt.
+- /tmp/test_results_track-E.txt: /tmp/test_results_track-E.txt, FAIL=0 (50 passed).
+- Integration gotchas for Tracks F/G:
+  - Card slugs must NOT collide across types in the same folder — slug derivation strips only the leading "<type>-" prefix, so "album-sugar.md" and "track-sugar.md" both yield slug "sugar" and would clash in /api/card/<slug>/<card_slug>. The fixture works around this by using "track-sugar-track.md". Track F should plan filenames accordingly (e.g., "track-sugar-cti.md" vs "album-sugar.md").
+  - The home page calls list_graphs(GRAPHS_ROOT). Track F's authored graphs will appear automatically once their README.md frontmatter is in place. The old hard-coded STUB_GRAPHS list has been removed.
+  - The /cards 501 stub was deliberately preserved per spec.
+- Deviations: None from the spec. Added a tests/_card_panel.html partial shared between card.html and the JS panel for consistency (server-render path + JS render path produce the same DOM shape). Updated tests/test_app.py — the original test_stub_routes_return_501 assertions were stale once the routes were implemented; replaced with a /cards-only stub assertion and home smoke.

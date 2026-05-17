@@ -1,0 +1,32 @@
+{# Partial: card detail panel body. Shared by card.html and the JS-rendered
+   side panel uses the same DOM shape. #}
+{% if card.image %}
+<img class="card-image" src="{{ card.image }}" alt="">
+{% endif %}
+<h1 class="card-name">{{ card.name }}</h1>
+<p class="card-type">{{ card.type }}</p>
+
+{% if card.display_frontmatter %}
+<dl class="card-fm">
+  {% for k, v in card.display_frontmatter.items() %}
+  <dt>{{ k }}</dt>
+  <dd>{{ v }}</dd>
+  {% endfor %}
+</dl>
+{% endif %}
+
+<div class="card-body">
+  {{ card.body_html | safe }}
+</div>
+
+{% if card.spotify_embed_url %}
+<div class="card-spotify">
+  <iframe
+    src="{{ card.spotify_embed_url }}"
+    data-spotify-kind="{{ card.spotify_kind }}"
+    height="{{ 352 if card.spotify_tall else 152 }}"
+    frameborder="0"
+    allowtransparency="true"
+    allow="encrypted-media"></iframe>
+</div>
+{% endif %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}{{ card.name }} — music graphs{% endblock %}
+
+{% block content %}
+<p class="back-link"><a href="/graph/{{ slug }}">← back to graph</a></p>
+<article class="card-detail">
+  {% include "_card_panel.html" %}
+</article>
+{% endblock %}

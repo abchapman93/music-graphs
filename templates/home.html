@@ -9,14 +9,22 @@
 
 <section class="graph-list">
   <h2>Graphs</h2>
+  {% if graphs %}
   <ul class="cards">
     {% for g in graphs %}
     <li class="card">
+      {% if g.cover_image %}
+      <img class="cover" src="{{ g.cover_image }}" alt="">
+      {% endif %}
       <h3><a href="/graph/{{ g.slug }}">{{ g.name }}</a></h3>
       <p>{{ g.description }}</p>
+      <p class="card-meta">{{ g.card_count }} card{{ '' if g.card_count == 1 else 's' }}</p>
     </li>
     {% endfor %}
   </ul>
+  {% else %}
+  <p>No graphs found.</p>
+  {% endif %}
 </section>
 
 <section class="links">

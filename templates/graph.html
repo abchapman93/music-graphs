@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ name }} — music graphs{% endblock %}
+
+{% block content %}
+<section class="graph-header">
+  <h2>{{ name }}</h2>
+  {% if description %}<p class="muted">{{ description }}</p>{% endif %}
+</section>
+
+<div class="layout-graph">
+  <div id="graph"></div>
+  <aside id="card-panel">
+    <p class="muted">Loading…</p>
+  </aside>
+</div>
+
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script>
+  window.GRAPH_SLUG = "{{ slug }}";
+</script>
+<script src="/static/js/graph.js"></script>
+{% endblock %}
