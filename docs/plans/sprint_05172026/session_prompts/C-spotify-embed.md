@@ -65,3 +65,11 @@ HANDOFF:
 ## Close-out
 
 Commit on `sprint/spotify-embed` with subject `feat(lib): Spotify URL → embed URL helper`. One-sentence summary.
+
+HANDOFF:
+- lib/spotify.py exports: spotify_embed_url, SPOTIFY_KINDS.
+- URL forms handled: track, album, playlist, artist, episode, show.
+- Edge cases (None, malformed, unknown kind, missing id, non-https scheme, wrong host): all return None.
+- Integration note for Track E: call `spotify_embed_url(frontmatter.get("spotify_url"))` at render time in app.py or in the template via a Jinja filter.
+- /tmp/test_results_track-C.txt: /tmp/test_results_track-C.txt, FAIL=0.
+- Deviations: none.
