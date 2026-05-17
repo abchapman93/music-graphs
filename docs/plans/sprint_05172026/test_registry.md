@@ -6,24 +6,24 @@ Demo-ready when **both columns are fully green**. The Sprint Manager signs off o
 
 | Track | Check | File | Status |
 |---|---|---|---|
-| A | Smoke: `app` importable, `GET /` returns 200 | `tests/test_app.py` | ⬜ |
-| B | `extract_wikilinks` covers brackets, pipes, dedup, whitespace, empty | `tests/test_cards.py` | ⬜ |
-| B | `parse_card` returns spec schema + slug derivation + body wikilink rewrite | `tests/test_cards.py` | ⬜ |
-| B | `parse_card` raises on missing `type` / `name` | `tests/test_cards.py` | ⬜ |
-| C | `spotify_embed_url` track/album/playlist/artist/episode/show happy path | `tests/test_spotify.py` | ⬜ |
-| C | `spotify_embed_url` strips query strings, normalizes http→https, no trailing slash | `tests/test_spotify.py` | ⬜ |
-| C | `spotify_embed_url` returns None on None/empty/malformed/unknown-kind | `tests/test_spotify.py` | ⬜ |
-| D | `build_graph` on fixture: 4 nodes, 2 edges (dedup verified) | `tests/test_graph.py` | ⬜ |
-| D | `build_graph` drops dangling wikilinks (no edge to nonexistent card) | `tests/test_graph.py` | ⬜ |
-| D | `build_graph` drops self-loops | `tests/test_graph.py` | ⬜ |
-| D | `list_graphs` returns expected metadata | `tests/test_graph.py` | ⬜ |
-| E | Routes return 200: `/`, `/graph/<fixture>`, `/api/graph/<fixture>`, `/api/card/<fixture>/<slug>` | `tests/test_routes.py` | ⬜ |
-| E | 404s: `/api/graph/missing`, `/api/card/<fixture>/missing` | `tests/test_routes.py` | ⬜ |
-| E | Integration curls (graph API + card API + page HTML) succeed on running server | inline in HANDOFF | ⬜ |
-| F | `tools/lint_graphs.py` reports 0 errors across all 3 real graph folders | `tools/lint_graphs.py` | ⬜ |
-| F | Full `pytest tests/` green after all 3 graphs in place (no regression) | `tests/` | ⬜ |
-| G | `GET /cards` returns 200, contains 9 type-filter options + ≥1 card name | `tests/test_routes.py` | ⬜ |
-| All | Full `pytest tests/` green after Wave 4 merges | `tests/` | ⬜ |
+| A | Smoke: `app` importable, `GET /` returns 200 | `tests/test_app.py` | ✅ 3 passed (commit `ee74a7d`) |
+| B | `extract_wikilinks` covers brackets, pipes, dedup, whitespace, empty | `tests/test_cards.py` | ✅ part of 14 passed (commit `8909b2b`) |
+| B | `parse_card` returns spec schema + slug derivation + body wikilink rewrite | `tests/test_cards.py` | ✅ part of 14 passed |
+| B | `parse_card` raises on missing `type` / `name` | `tests/test_cards.py` | ✅ part of 14 passed |
+| C | `spotify_embed_url` track/album/playlist/artist/episode/show happy path | `tests/test_spotify.py` | ✅ 17 passed (commit `e1ac97c`) |
+| C | `spotify_embed_url` strips query strings, normalizes http→https, no trailing slash | `tests/test_spotify.py` | ✅ part of 17 passed |
+| C | `spotify_embed_url` returns None on None/empty/malformed/unknown-kind | `tests/test_spotify.py` | ✅ part of 17 passed |
+| D | `build_graph` on fixture: 4 nodes, 2 edges (dedup verified) | `tests/test_graph.py` | ✅ 7 passed (commit `0a189ec`) |
+| D | `build_graph` drops dangling wikilinks (no edge to nonexistent card) | `tests/test_graph.py` | ✅ part of 7 passed |
+| D | `build_graph` drops self-loops | `tests/test_graph.py` | ✅ part of 7 passed |
+| D | `list_graphs` returns expected metadata | `tests/test_graph.py` | ✅ part of 7 passed |
+| E | Routes return 200: `/`, `/graph/<fixture>`, `/api/graph/<fixture>`, `/api/card/<fixture>/<slug>` | `tests/test_routes.py` | ✅ part of 50 passed (commit `353eb69`) |
+| E | 404s: `/api/graph/missing`, `/api/card/<fixture>/missing` | `tests/test_routes.py` | ✅ part of 50 passed |
+| E | Integration curls (graph API + card API + page HTML) succeed on running server | PM smoke 2026-05-17 | ✅ all 200; pittsburgh-jazz 16n/37e, band-x 13n/49e, bowie-covers 13n/28e; spotify embed wired |
+| F | `tools/lint_graphs.py` reports 0 errors across all 3 real graph folders | `tools/lint_graphs.py` | ✅ "Total errors: 0" (PM run 2026-05-17) |
+| F | Full `pytest tests/` green after all 3 graphs in place (no regression) | `tests/` | ✅ 50 passed (commit `afc751b`) |
+| G | `GET /cards` returns 200, contains 9 type-filter options + ≥1 card name | `tests/test_routes.py` | ✅ part of 51 passed (commit `3a2f454`) |
+| All | Full `pytest tests/` green after Wave 4 merges | `tests/` | ✅ **51 passed, 0 failed** on main HEAD `afc751b` |
 
 ## Manual interaction checks (Alec signs off — exercise in browser)
 
