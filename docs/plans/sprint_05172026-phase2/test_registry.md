@@ -1,0 +1,64 @@
+# Test Registry — sprint_05172026-phase2
+
+**Sprint:** music-graphs Phase 2
+**Demo target:** 2026-06-07
+**Sign-off:** PM signs automated rows after `/tmp/test_results_<task>.txt` shows FAIL=0; Alec signs manual rows after end-to-end exercise.
+
+---
+
+## Automated (PM signs off)
+
+| # | Track | Check | Verification | Status |
+|---|---|---|---|---|
+| A1 | A | `retrieve-spotify-song` skill smoke test: lookup "Ashgrove Dave Alvin" returns the verified album URL | Run skill in dry-run mode; URL matches `https://open.spotify.com/album/2At5ShihdUNDdc33Ztp7RX` | ⬜ |
+| A2 | A | Skill fails loudly when MCP unavailable (does not return a guess) | Stub MCP to error; skill returns error, not a URL | ⬜ |
+| B1 | B | `add-node` skill produces a lint-clean card | Add scratch node to a temp graph; `lint_graphs.py` exits 0 | ⬜ |
+| B2 | B | `add-node` refuses to write a card that fails lint | Force-invalid frontmatter; skill aborts before write | ⬜ |
+| C1 | C | `add-edge` adds a wikilink in the correct card body | Smoke test: edge between two scratch nodes; both bodies updated as expected | ⬜ |
+| C2 | C | `add-edge` warns on dangling wikilinks (target slug doesn't exist) | Run with missing target; skill warns and either creates or aborts | ⬜ |
+| D1 | D | `expand-graph` surfaces 5–10 candidates and pauses for approval | Dry-run on bowie-covers; output shows candidate list, no writes | ⬜ |
+| D2 | D | Approved candidates flow through `add-node` + `add-edge` (no direct file writes) | Approve 1 candidate; verify trace shows skill A→B→C calls | ⬜ |
+| E1 | E | Family-agent definition exists and loads in both Claude Code and claude.ai/code | Manual check via `/agents` list in both environments | ⬜ |
+| F1 | F | 5 new band-x album cards exist (Cervenka, Doe, Alvin/Ashgrove, Bonebrake, Zoom) | `ls graphs/band-x/cards/album-*.md` shows ≥5 new files | ⬜ |
+| F2 | F | All 5 albums have verified `spotify_url` in frontmatter | grep + visual check; each URL was MCP-sourced | ⬜ |
+| F3 | F | Tony Gilkyson rename complete and lint-clean (pre-sprint; just confirm still good) | `lint_graphs.py band-x` exits 0; no `troy-gilkyson` references remain | ✅ (pre-sprint) |
+| G1 | G | pittsburgh-jazz has ≥1 album per person card | Count person cards vs album cards with person wikilinks | ⬜ |
+| G2 | G | Gene Harris Trio Plus One card exists, linked to both Turrentine and Ray Brown | grep wikilinks in album card | ⬜ |
+| G3 | G | Sean Jones album card exists with Duquesne note | grep "Duquesne" in card body | ⬜ |
+| G4 | G | Maureen Budway album card has notes about Alec's accompaniment, recording-before-death, "Hard Times" significance | grep for all three in card body | ⬜ |
+| G5 | G | Sean Jones ↔ Maureen Budway album edge (on "Sweet Lover No More") exists | wikilink in Maureen album card body referencing Sean Jones | ⬜ |
+| H1 | H | bowie-covers has ≥5 new cards added via `expand-graph` | `git log` shows new cards from H session | ⬜ |
+| H2 | H | Nirvana MTV Unplugged Spotify URL resolved OR documented as unresolvable | Card has verified URL, or explicit note `spotify_url: null  # MCP search exhausted` | ⬜ |
+| I1 | I | All 3 graph READMEs have non-null `cover_image` with verified URL or local path | grep `cover_image:` in each README | ⬜ |
+| I2 | I | Cover images render on home page (no broken-image icons) | Manual curl + visual check | ⬜ |
+| Z1 | all | Phase 1 pytest still passes (51 tests, FAIL=0) | `pytest` from repo root, sink to `/tmp/test_results_z1.txt` | ⬜ |
+| Z2 | all | `lint_graphs.py` reports 0 errors across all 3 graphs | Run lint at end of sprint | ⬜ |
+
+---
+
+## Manual (Alec signs off)
+
+| # | Check | Status |
+|---|---|---|
+| M1 | Family-agent end-to-end on local Claude Code: add one new node + one new edge to any graph without ever seeing YAML or being asked to write markdown | ⬜ |
+| M2 | Family-agent end-to-end on claude.ai/code (cloud): same as M1 in the cloud surface | ⬜ |
+| M3 | Cover images render correctly on `/` for all 3 graphs (no broken images, sensible crop) | ⬜ |
+| M4 | All 3 graph views still load (`/graph/band-x`, `/graph/bowie-covers`, `/graph/pittsburgh-jazz`) with correct node/edge counts | ⬜ |
+| M5 | Click a new band-x solo-album card — Spotify embed plays | ⬜ |
+| M6 | Click the Gene Harris Trio Plus One card — Spotify embed plays; both Turrentine + Ray Brown wikilinks navigate | ⬜ |
+| M7 | Sean Jones card and Maureen Budway album card both surface Alec's personal Duquesne notes | ⬜ |
+| M8 | New bowie-covers additions are accurate (no hallucinated covers; each has Wikipedia or Spotify backing) | ⬜ |
+| M9 | `expand-graph` skill workflow feels right: candidate list is sensible, approve/reject UX is clear | ⬜ |
+| M10 | Setup docs for Clare/Jeremiah make sense — Alec can follow them as if he were a non-technical user | ⬜ |
+
+---
+
+## Deferred / accepted gaps
+
+- **Nirvana MTV Unplugged in New York Spotify URL.** Pre-sprint retry via MCP again returned no match (consistent with Phase 1 closeout). Track H attempts via `expand-graph` + web search. If still unfindable, card stays `spotify_url: null` with documenting comment — does not block demo (H2).
+
+---
+
+## Demo-ready gate
+
+All automated rows ✅ + all manual rows ✅ (or explicitly deferred with documentation). PM flags **"Demo-ready: NO — N rows outstanding"** until both columns clear.
