@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, render_template
+from flask import Flask, abort, jsonify, render_template, send_from_directory
 
 from lib.cards import parse_card
 from lib.graph import build_graph, list_graphs
@@ -75,9 +75,38 @@ def _build_card_payload(card: dict) -> dict:
     }
 
 
+@app.route("/graph-images/<slug>/<path:filename>")
+def graph_image(slug, filename):
+    """Serve images committed under ``graphs/<slug>/images/``.
+
+    Used by graph READMEs that reference local cover images via a relative
+    ``images/...`` path. Resolves to ``GRAPHS_ROOT/<slug>/images/<filename>``.
+    """
+    images_dir = _graph_dir(slug) / "images"
+    if not images_dir.is_dir():
+        abort(404)
+    return send_from_directory(images_dir, filename)
+
+
+def _resolve_cover_image(slug: str, cover: str | None) -> str | None:
+    """Rewrite a relative ``images/...`` cover_image to the graph-images route.
+
+    Absolute (``http(s)://``) URLs pass through unchanged.
+    """
+    if not cover:
+        return None
+    if cover.startswith(("http://", "https://", "/")):
+        return cover
+    if cover.startswith("images/"):
+        return f"/graph-images/{slug}/{cover[len('images/'):]}"
+    return cover
+
+
 @app.route("/")
 def home():
     graphs = list_graphs(GRAPHS_ROOT)
+    for g in graphs:
+        g["cover_image"] = _resolve_cover_image(g["slug"], g.get("cover_image"))
     return render_template("home.html", graphs=graphs)
 
 
