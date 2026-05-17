@@ -75,3 +75,17 @@ HANDOFF:
 ## Close-out
 
 Commit on `sprint/card-parser` with subject `feat(lib): card markdown + wikilink parser`. Brief paragraph summary of the module shape and test coverage.
+
+---
+
+HANDOFF:
+- lib/cards.py exports: extract_wikilinks, parse_card.
+- parse_card output schema: matches spec; spotify_embed key omitted — Track E wires open.spotify.com → embed URL in app.py at request time using lib.spotify.spotify_embed_url(card["frontmatter"].get("spotify_url")).
+- Test fixtures: tests/fixtures/person-stanley-turrentine.md (canonical sample with frontmatter + body wikilinks), tests/fixtures/sample_card.md (identical copy for spec-named reference), tests/fixtures/track-only.md (minimal card, no wikilinks), tests/fixtures/missing_type.md (error path).
+- Packages used: python-frontmatter (which pulls in PyYAML), markdown, pytest (test-only).
+- Integration gotchas for Track D: card["wikilinks"] is the merged, de-duplicated list of (type, slug) from BOTH frontmatter string scalars (recursive walk over dicts/lists) AND the body. Consumers (build_graph) should iterate card["wikilinks"] directly — do NOT re-run extract_wikilinks on body or frontmatter, or you'll double-count. Frontmatter wikilinks come first in first-seen order, then body links.
+- Wikilink regex is permissive on type (any lowercase-ish identifier) since the music-graphs schema uses person|group|album|song|track|location|genre|note|memory. Whitespace inside [[...]] and around `:` / `|` is tolerated.
+- body_html anchor shape: <a href="#{type}:{slug}" data-wikilink="{type}:{slug}" class="wikilink">{display}</a>. Display is the part after `|` if present, else "{type}:{slug}".
+- Markdown extensions enabled: "extra", "sane_lists".
+- /tmp/test_results_track-B.txt: /tmp/test_results_track-B.txt, FAIL=0 (14 passed).
+- Deviations: none.
