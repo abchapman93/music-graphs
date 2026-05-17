@@ -19,8 +19,8 @@
 | D1 | D | `expand-graph` surfaces 5–10 candidates and pauses for approval | Ceiling clamp `[1,10]` enforced in `_clamp_ceiling()`; overflow count returned; 14 helper tests pass | ✅ (merge 11a5d45) |
 | D2 | D | Approved candidates flow through `add-node` + `add-edge` (no direct file writes) | Default `search_fn` raises `NotImplementedError`; injected `add_node_fn`/`add_edge_fn` are the only write path; dry-run sentinel test guarantees no side effects | ✅ (merge 11a5d45) |
 | E1 | E | Family-agent definition exists and loads in both Claude Code and claude.ai/code | `.claude/agents/music-graphs-builder.md` + `docs/family-setup.md` present; rehearsal node+edge add executed cleanly against scratch graph. Real-session M1/M2 deferred to Alec. | ✅ (merge 8a9cfa8) |
-| F1 | F | 5 new band-x album cards exist (Cervenka, Doe, Alvin/Ashgrove, Bonebrake, Zoom) | `ls graphs/band-x/cards/album-*.md` shows ≥5 new files | ⬜ |
-| F2 | F | All 5 albums have verified `spotify_url` in frontmatter | grep + visual check; each URL was MCP-sourced | ⬜ |
+| F1 | F | 5 new band-x album cards exist (Cervenka/Somewhere Gone, Doe/A Year in the Wilderness, Alvin/Ashgrove, Bonebrake/Coleman, Zoom/Johny Walk Don't Run Paulene) | All 5 cards present; band-x graph 13→18 nodes, 49→55 edges | ✅ (merge 735e88a) |
+| F2 | F | All 5 albums have verified `spotify_url` in frontmatter | 3 provided URLs (Alvin/Bonebrake/Zoom) verified via WebFetch+MCP cross-check; 2 (Cervenka/Doe) MCP-sourced and Alec-approved | ✅ (merge 735e88a) |
 | F3 | F | Tony Gilkyson rename complete and lint-clean (pre-sprint; just confirm still good) | `lint_graphs.py band-x` exits 0; no `troy-gilkyson` references remain | ✅ (pre-sprint) |
 | G1 | G | pittsburgh-jazz has ≥1 album per person card | Count person cards vs album cards with person wikilinks | ⬜ |
 | G2 | G | Gene Harris Trio Plus One card exists, linked to both Turrentine and Ray Brown | grep wikilinks in album card | ⬜ |
@@ -29,8 +29,8 @@
 | G5 | G | Sean Jones ↔ Maureen Budway album edge (on "Sweet Lover No More") exists | wikilink in Maureen album card body referencing Sean Jones | ⬜ |
 | H1 | H | bowie-covers has ≥5 new cards added via `expand-graph` | `git log` shows new cards from H session | ⬜ |
 | H2 | H | Nirvana MTV Unplugged Spotify URL resolved OR documented as unresolvable | Card has verified URL, or explicit note `spotify_url: null  # MCP search exhausted` | ⬜ |
-| I1 | I | All 3 graph READMEs have non-null `cover_image` with verified URL or local path | grep `cover_image:` in each README | ⬜ |
-| I2 | I | Cover images render on home page (no broken-image icons) | Manual curl + visual check | ⬜ |
+| I1 | I | All 3 graph READMEs have non-null `cover_image` with verified URL or local path | All 3 READMEs reference `images/<file>.jpg`; files downloaded from Wikimedia Commons | ✅ (merge b44a25f) |
+| I2 | I | Cover images render on home page (no broken-image icons) | `/graph-images/<slug>/<file>` route added in app.py; home page returns 3 `<img class="cover">` tags; HEAD requests return 200 for all three | ✅ (merge b44a25f) |
 | Z1 | all | Phase 1 pytest still passes (51 tests, FAIL=0) | `pytest` from repo root, sink to `/tmp/test_results_z1.txt` | ⬜ |
 | Z2 | all | `lint_graphs.py` reports 0 errors across all 3 graphs | Run lint at end of sprint | ⬜ |
 

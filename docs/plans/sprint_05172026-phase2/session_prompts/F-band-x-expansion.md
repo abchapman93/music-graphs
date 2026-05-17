@@ -84,3 +84,31 @@ git -C /private/tmp/mg-wt-F add .
 git -C /private/tmp/mg-wt-F commit -m "content(band-x): add solo/side albums for all five members (dogfood)"
 ```
 Report SHA + HANDOFF to PM.
+
+---
+
+HANDOFF (Track F):
+- Cards created (paths + slugs):
+  - `graphs/band-x/cards/album-ashgrove.md` → slug `ashgrove`
+  - `graphs/band-x/cards/album-the-bonebrake-syncopators-play-coleman.md` → slug `the-bonebrake-syncopators-play-coleman`
+  - `graphs/band-x/cards/album-johny-walk-don-t-run-paulene.md` → slug `johny-walk-don-t-run-paulene` (apostrophe stripped from "Don't" via slugifier — accepted as-is)
+  - `graphs/band-x/cards/album-somewhere-gone.md` → slug `somewhere-gone`
+  - `graphs/band-x/cards/album-a-year-in-the-wilderness.md` → slug `a-year-in-the-wilderness`
+- Spotify URLs (verified):
+  - [provided] `https://open.spotify.com/album/2At5ShihdUNDdc33Ztp7RX` — Ashgrove (Dave Alvin, 2004)
+  - [provided] `https://open.spotify.com/album/5DooqGxu4t3H80JkEaIxIw` — The Bonebrake Syncopators Play Coleman (2012)
+  - [provided] `https://open.spotify.com/album/32SOzQ2vEFAlWjKLDotWNP` — Johny Walk Don't Run Paulene (Billy Zoom, 2001)
+  - [skill-proposed, Alec approved] `https://open.spotify.com/album/4P3mtepjuUBBaBOrPKf2Ss` — Somewhere Gone (Exene Cervenka, 2009)
+  - [skill-proposed, Alec approved] `https://open.spotify.com/album/46M552vA2Fr8YaH4W76O4Z` — A Year in the Wilderness (John Doe, 2007)
+- Wikilinks added (src → tgt pairs):
+  - Album→person via add-node's Related sentence: 5 (album-* → person-* for each)
+  - Person→album via add-edge one-way: 5 (person-* → album-* with relationship="recorded")
+  - Plus an in-body wikilink in `album-a-year-in-the-wilderness.md` referencing `[[person:dave-alvin]]` (Doe's guest list) — auto-creates a 6th edge
+- Skill friction notes (material for next sprint):
+  - **BUG in `write_card.py`:** `repo_root = Path(__file__).resolve().parents[3]` resolves to `.claude/`, not the worktree. Should be `parents[4]`. Workaround: pass explicit `repo_root=` to every call. Same likely applies to `add_edge.py` — I passed `repo_root=` there too defensively. Track B/C should fix and re-test.
+  - The skills don't auto-link reciprocal edges. add-node writes the album→person side via `wikilinks=`; I had to call add-edge separately for the person→album side. The family agent will need to know this — flagged for E follow-up (it's already implied by E's HANDOFF integration notes).
+  - No way to set canonical_link to `null` explicitly — passing `canonical_link=None` correctly omits the key. Fine.
+- /tmp/test_results_track-f.txt: lint=0 errors across all 3 graphs; pytest 100 passed, 0 failed
+- Smoke check: `/api/graph/band-x` reports nodes=18 (was 13) edges=55 (was 49); all 5 new album slugs present in `/cards` index and in the band-x API node list as `album:*` group. Album-list (sorted): a-year-in-the-wilderness, ashgrove, johny-walk-don-t-run-paulene, knitters-poor-little-critter, los-angeles, somewhere-gone, the-bonebrake-syncopators-play-coleman, under-the-big-black-sun, wild-gift.
+- Deviations: none. (Used a one-shot Python driver script at /tmp/track-f-driver.py to call the two skill helpers in sequence; this is the dogfood path — confirms the contracts work but flagged the repo_root inference bug above.)
+

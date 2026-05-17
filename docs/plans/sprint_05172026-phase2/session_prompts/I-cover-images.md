@@ -75,3 +75,21 @@ git -C /private/tmp/mg-wt-I add .
 git -C /private/tmp/mg-wt-I commit -m "feat(home): cover images for all three graphs (M12)"
 ```
 Report SHA + HANDOFF to PM.
+
+---
+
+HANDOFF (Track I):
+- Cover image choices per graph:
+  - band-x: images/x-1979-la.jpg (Wikimedia Commons: X band, 1979 LA — https://commons.wikimedia.org/wiki/File:X1979LA.jpg)
+  - bowie-covers: images/david-bowie.jpg (Wikimedia Commons: David Bowie, Chicago 2002, Adam Bielawski — https://commons.wikimedia.org/wiki/File:David-Bowie_Chicago_2002-08-08_photoby_Adam-Bielawski-cropped.jpg)
+  - pittsburgh-jazz: images/erroll-garner-1947.jpg (Wikimedia Commons: Erroll Garner, 1947 — https://commons.wikimedia.org/wiki/File:Erroll_Garner_1947.jpg)
+- Local files downloaded:
+  - graphs/band-x/images/x-1979-la.jpg
+  - graphs/bowie-covers/images/david-bowie.jpg
+  - graphs/pittsburgh-jazz/images/erroll-garner-1947.jpg
+- Template/app.py changes:
+  - `app.py`: added `/graph-images/<slug>/<path:filename>` route (send_from_directory) and `_resolve_cover_image` helper that rewrites a relative `images/...` cover_image into that route in the home view. No template changes needed — `templates/home.html` already had the `{% if cover_image %}` block.
+- /tmp/test_results_track-i.txt: lint=0, pytest FAIL=0 (100 passed), home <img> count=3
+- M12 manual check (verify in browser): pass — `curl -sI /graph-images/<slug>/<file>` returns 200 for all three; `curl /` shows three `<img class="cover" src="/graph-images/...">` tags.
+- Deviations: none.
+
