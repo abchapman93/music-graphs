@@ -83,3 +83,18 @@ HANDOFF:
 ## Close-out
 
 Commit on `sprint/graph-build` with subject `feat(lib): build vis-network graph + list_graphs`. One-paragraph summary.
+
+---
+
+HANDOFF:
+- lib/graph.py exports: build_graph, list_graphs.
+- Edge semantics: undirected (A→B and B→A dedupe to a single edge via frozenset key). Self-loops dropped. Nodes sorted by id; edges sorted by (from, to) for deterministic output.
+- Dangling wikilinks logged at DEBUG via logging.getLogger(__name__), not rendered. Track E may want to surface a /api/lint endpoint later — not in scope here.
+- Consumed Track B's `card["wikilinks"]` directly (already deduped/merged from frontmatter + body); did not re-extract.
+- Fixture: tests/fixtures/graphs/fixture-graph/ — 4 cards (person-alice, person-bob, person-charlie, location-wonderland), 2 expected edges. README.md carries name/description/cover_image frontmatter for list_graphs coverage.
+- /tmp/test_results_track-D.txt: FAIL=0 (7 graph tests + 41 full-suite tests pass).
+- Integration notes for Track E:
+  - `list_graphs` returns `cover_image` as the raw value from README frontmatter (string path or None). Track E's templates must resolve relative paths to `/static/graphs/<slug>/<cover_image>` or similar.
+  - Node `title` is a short tooltip `"<name> (<type>)"` — Track E can override or extend at render time but vis-network will pick it up by default.
+  - `build_graph` tolerates a missing `cards/` subdir (returns empty graph) and an unparseable card file (skipped with DEBUG log) — safe to call on real graph folders.
+- Deviations: none.
