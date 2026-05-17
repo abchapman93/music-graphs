@@ -2,7 +2,7 @@
 type: album
 name: "Los Angeles"
 canonical_link: https://en.wikipedia.org/wiki/Los_Angeles_(X_album)
-spotify_url: https://open.spotify.com/album/3Gj9rEzM4LJ5pj9CC5sLfX
+spotify_url: https://open.spotify.com/album/1qs5rB2gsrAWDLrUlyjFUD
 release_year: 1980
 ---
 

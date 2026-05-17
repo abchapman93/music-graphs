@@ -2,7 +2,7 @@
 type: album
 name: "Wild Gift"
 canonical_link: https://en.wikipedia.org/wiki/Wild_Gift
-spotify_url: https://open.spotify.com/album/3VuGXBjkLnuRWcaCXmFwh9
+spotify_url: https://open.spotify.com/album/2ECSVdWu5RCvYqIRGA0pyR
 release_year: 1981
 ---
 

@@ -2,7 +2,7 @@
 type: album
 name: "Poor Little Critter on the Road"
 canonical_link: https://en.wikipedia.org/wiki/Poor_Little_Critter_on_the_Road
-spotify_url: https://open.spotify.com/album/2j2WCAKlhsmcRCYAdkX0Az
+spotify_url: https://open.spotify.com/album/6Cl5XLIHCBSVd7JMnDBnF2
 release_year: 1985
 ---
 

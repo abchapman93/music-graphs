@@ -2,7 +2,7 @@
 type: album
 name: "Under the Big Black Sun"
 canonical_link: https://en.wikipedia.org/wiki/Under_the_Big_Black_Sun
-spotify_url: https://open.spotify.com/album/4eIv5Lk09EGRfwxNh5JxRr
+spotify_url: https://open.spotify.com/album/4tccdvGeX34eLWlHhwOt5b
 release_year: 1982
 ---
 
