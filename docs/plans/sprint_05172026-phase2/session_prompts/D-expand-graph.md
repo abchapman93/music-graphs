@@ -70,3 +70,23 @@ git -C /private/tmp/mg-wt-D add .
 git -C /private/tmp/mg-wt-D commit -m "feat(skills): expand-graph orchestrator with candidate review"
 ```
 Report SHA + HANDOFF to PM.
+
+---
+
+HANDOFF (Track D):
+- SKILL.md path: `/private/tmp/mg-wt-D/.claude/skills/expand-graph/SKILL.md`
+- Workflow stages: (1) read graph README + existing cards + `note-*.md` scope cards; (2) state inclusion criterion back to user; (3) generate candidates via injected search_fn (web + Spotify MCP); (4) verify Spotify URL per candidate via `retrieve-spotify-song` (or carry `spotify_url=None` with documented `spotify_reason`); (5) propose 1–3 wikilinks per candidate to existing slugs; (6) present numbered list (≤ ceiling); (7) wait for user approval; (8) for each approved → `add-node` then reciprocal `add-edge` on existing-target wikilinks; (9) run lint and report summary.
+- Candidate ceiling enforced at: `expand_graph.py:_clamp_ceiling()` (range `[1, 10]`) called from `generate_candidates()`; list truncated before return; `overflow` count surfaced for the "more" follow-up.
+- Dry-run flag: `run_expand_graph(..., dry_run=True)` — returns `ExpansionResult` with candidates populated, `created_paths=[]`, `edge_paths=[]`, `lint_returncode=None`; injected `add_node_fn` / `add_edge_fn` are not called. Test `test_dry_run_returns_candidates_without_writes` enforces this with sentinel callables that raise if invoked.
+- /tmp/test_results_track-d.txt: FAIL=0 (14 passed; full suite 90 passed)
+- Integration gotchas for Track H (bowie-covers dogfood):
+  - The helper does NOT do live web/MCP search. Track H's session must pass `search_fn=` that wraps `WebSearch` + `mcp__68e7e171-8619-450d-bfc7-458af6964130__search`. The default search raises `NotImplementedError` on purpose so accidental "invented candidate" runs fail loud.
+  - `Candidate(spotify_url=None)` requires an explicit `spotify_reason` (e.g. `"MCP search exhausted"`) — Track H's search wrapper must set this when the MCP comes up empty rather than dropping the candidate silently.
+  - `add-edge` integration is best-effort: helper auto-imports `.claude/skills/add-edge/scripts/add_edge.py` if present; if Track C's helper module name or signature drifts from `add_edge(graph, src_slug, tgt_slug, ...)`, Track H may need to inject `add_edge_fn=` explicitly. The orchestrator builds reciprocal edges only — wikilinks on the new card itself are written by `add-node` from the `wikilinks=` argument at create time.
+  - Reciprocal `add-edge` failures are recorded in `result.skipped` but do not stop the run — Track H should surface them.
+- Integration gotchas for Track E (family agent):
+  - The agent should explain the 5–10 ceiling and the approval flow to the user up front ("I'll show you up to N suggestions, you pick which to add"). Default ceiling=5.
+  - The agent must pass `auto_pick=true` semantics down to `retrieve-spotify-song` per-candidate, but must still expect the song-skill to prompt when the MCP returns >1 result — that's a blocking step inside the candidate loop, not a background call.
+  - `dry_run=True` is a useful preview-only mode the agent can offer Clare/Jeremiah ("want to see suggestions without writing anything?") before committing.
+  - Album-only default is enforced by the helper's `Candidate.type` default (`"album"`); the agent should only propose `type="track"` when there's an explicit narrative reason and call it out in the user-facing approval list.
+- Deviations: none. Track C's `add-edge` helper is not in this worktree (parallel track), so live `add-edge` wiring is exercised only via `add_edge_fn` injection in tests; real-call wiring auto-imports `add_edge.py` at runtime once Track C merges.

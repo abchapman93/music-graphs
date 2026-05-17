@@ -67,3 +67,19 @@ git -C /private/tmp/mg-wt-C add .
 git -C /private/tmp/mg-wt-C commit -m "feat(skills): add-edge wikilink writer with dangling detection"
 ```
 Report SHA + HANDOFF to PM.
+
+---
+
+HANDOFF (Track C):
+- SKILL.md path: /private/tmp/mg-wt-C/.claude/skills/add-edge/SKILL.md
+- Helper signature: add_edge(graph, src_slug, tgt_slug, *, repo_root=None, graphs_root=None, relationship=None, symmetric=False, on_dangling="abort", run_lint=True, lint_cmd=None) -> list[Path]
+- Default behavior on dangling target: (a) abort — raises DanglingTargetError. Caller (Claude) defers to add-node, then retries. Pass on_dangling="forward" for option (b).
+- /tmp/test_results_track-c.txt: FAIL=0 (10/10 passed)
+- Integration gotchas for Track D (expand-graph):
+  - add-edge does NOT create nodes. expand-graph must sequence add-node calls for every new endpoint BEFORE calling add-edge, or pass on_dangling="forward" knowing the lint gate will reject orphan forward refs at the next write.
+  - Card types are inferred from filename prefix (`<type>-<slug>.md`). The src_slug/tgt_slug arguments are slugs only, not type-qualified.
+  - For "member of" / "has member" type asymmetric relationships, expand-graph should make TWO one-way add_edge calls with distinct relationship phrases, NOT symmetric=True (symmetric uses the same phrase on both sides).
+  - The helper does in-memory snapshot rollback on lint failure — if expand-graph batches many calls, each call is independently rolled back; partial-batch failures leave earlier successful calls intact. expand-graph may want a higher-level all-or-nothing wrapper.
+  - Duplicate detection uses the wikilink regex (matches `[[type:slug]]` and `[[type:slug|Display]]`); expand-graph can rely on calling add_edge idempotently — re-runs raise DuplicateEdgeError rather than double-writing.
+- Deviations: none
+
