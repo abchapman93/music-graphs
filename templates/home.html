@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}music graphs — home{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <p>Browse curated music graphs. Each graph is a hand-authored set of cards connected by wikilinks.</p>
+</section>
+
+<section class="graph-list">
+  <h2>Graphs</h2>
+  <ul class="cards">
+    {% for g in graphs %}
+    <li class="card">
+      <h3><a href="/graph/{{ g.slug }}">{{ g.name }}</a></h3>
+      <p>{{ g.description }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="links">
+  <p><a href="/cards">Browse all cards</a></p>
+</section>
+{% endblock %}

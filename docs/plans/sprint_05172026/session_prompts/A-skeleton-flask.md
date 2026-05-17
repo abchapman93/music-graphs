@@ -65,3 +65,10 @@ HANDOFF:
 ## Close-out
 
 Brief one-paragraph summary: files created, smoke test result, any decisions made (e.g., chose `python-frontmatter` over manual YAML parsing — note that here even though parsing is Track B's job). Commit on `sprint/skeleton-flask` with subject `feat: Flask skeleton + home page + route stubs`.
+
+HANDOFF:
+- Routes scaffolded: `/` (home), `/graph/<slug>` (501), `/api/graph/<slug>` (501), `/api/card/<graph_slug>/<card_slug>` (501), `/graph/<slug>/card/<card_slug>` (501), `/cards` (501).
+- requirements.txt versions installed during testing: Flask==3.1.3, Markdown==3.9, PyYAML==6.0.3, python-frontmatter==1.1.0. pytest==8.4.2 (test-only, not in requirements.txt).
+- Any deviations from the spec: none.
+- /tmp/test_results_track-A.txt: /tmp/test_results_track-A.txt, FAIL=0 (3 passed).
+- Manual curl check: HTTP/1.1 200 OK.

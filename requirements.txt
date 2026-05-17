@@ -1,0 +1,4 @@
+Flask
+Markdown
+PyYAML
+python-frontmatter
