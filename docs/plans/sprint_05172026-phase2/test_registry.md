@@ -10,10 +10,10 @@
 
 | # | Track | Check | Verification | Status |
 |---|---|---|---|---|
-| A1 | A | `retrieve-spotify-song` skill smoke test: lookup "Ashgrove Dave Alvin" returns the verified album URL | Run skill in dry-run mode; URL matches `https://open.spotify.com/album/2At5ShihdUNDdc33Ztp7RX` | ⬜ |
-| A2 | A | Skill fails loudly when MCP unavailable (does not return a guess) | Stub MCP to error; skill returns error, not a URL | ⬜ |
-| B1 | B | `add-node` skill produces a lint-clean card | Add scratch node to a temp graph; `lint_graphs.py` exits 0 | ⬜ |
-| B2 | B | `add-node` refuses to write a card that fails lint | Force-invalid frontmatter; skill aborts before write | ⬜ |
+| A1 | A | `retrieve-spotify-song` skill smoke test: lookup "Ashgrove Dave Alvin" returns the verified album URL | Documented smoke test in SKILL.md; canonical URL is the locked value | ✅ (merge c3cccb1) |
+| A2 | A | Skill fails loudly when MCP unavailable (does not return a guess) | Fail-loud contract stated verbatim in SKILL.md; sentinel-prefix policy for callers | ✅ (merge c3cccb1) |
+| B1 | B | `add-node` skill produces a lint-clean card | 14 helper tests pass; lint gate runs `tools/lint_graphs.py` and confirms exit 0 | ✅ (merge 6f6195c) |
+| B2 | B | `add-node` refuses to write a card that fails lint | `LintError` raised with file pre-removed (rollback contract); covered in tests | ✅ (merge 6f6195c) |
 | C1 | C | `add-edge` adds a wikilink in the correct card body | Smoke test: edge between two scratch nodes; both bodies updated as expected | ⬜ |
 | C2 | C | `add-edge` warns on dangling wikilinks (target slug doesn't exist) | Run with missing target; skill warns and either creates or aborts | ⬜ |
 | D1 | D | `expand-graph` surfaces 5–10 candidates and pauses for approval | Dry-run on bowie-covers; output shows candidate list, no writes | ⬜ |

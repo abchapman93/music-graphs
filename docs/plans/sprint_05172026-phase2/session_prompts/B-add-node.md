@@ -73,3 +73,24 @@ git -C /private/tmp/mg-wt-B add .
 git -C /private/tmp/mg-wt-B commit -m "feat(skills): add-node card-creation skill with lint gate"
 ```
 Report SHA + HANDOFF to PM.
+
+---
+
+HANDOFF (Track B):
+- SKILL.md path: /private/tmp/mg-wt-B/.claude/skills/add-node/SKILL.md
+- Trigger phrases: "add a card", "add node", "add a node", "create a card", "create a card for [X]", "add [X] to [graph]", "new card"
+- Helper module signature: `write_card.write_card(graph, type, name, *, repo_root=None, graphs_root=None, spotify_url=None, canonical_link=None, body=None, wikilinks=None, run_lint=True, lint_cmd=None) -> Path` (raises `LintError` with `.stdout`/`.stderr`/`.returncode` on lint failure; file is removed before the exception)
+- Lint invocation pattern: `<repo_root>/.venv/bin/python <repo_root>/tools/lint_graphs.py <graphs_root>` (falls back to `sys.executable` if no .venv). The lint script iterates subdirs of its argument, so the skill passes the graphs **root**, not a single graph dir — this lints every graph and catches cross-graph regressions.
+- /tmp/test_results_track-b.txt: FAIL=0 (14 passed; full suite 65 passed)
+- Integration gotchas for Track C (add-edge):
+  - Card bodies written by this skill end with an optional "Related: …" sentence containing wikilinks. `add-edge` should append new wikilinks to the body as new sentences/paragraphs, not try to rewrite that sentence. Re-running through this skill is also fine — the lint gate catches dangling/orphan results.
+  - Slug derivation: filename is `<type>-<slug>.md`; slug = filename-after-first-hyphen (per `lib/cards._derive_slug`). The disambiguator suffix (`-track`, `-2`, …) becomes part of the slug, so any edge that references a disambiguated card must use the disambiguated slug.
+  - `check_collision(graph_dir, card_type, name)` is exported from `write_card.py` for read-only slug inspection.
+- Integration gotchas for Track E (family agent):
+  - Agent MUST invoke `retrieve-spotify-song` first when a Spotify URL is wanted, then pass the URL into `add-node`. This skill never touches the Spotify MCP.
+  - On `LintError`, the new file has already been removed. Surface `.stdout` verbatim to the user — don't paraphrase. Common cause: orphan node (no edges), so the agent should encourage `wikilinks=[...]` on every new card.
+  - The skill writes only frontmatter keys `type`, `name`, `canonical_link`, `spotify_url` (when supplied). Other frontmatter keys present in Phase 1 cards (e.g. `birth_date`, `release_year`) are not part of this skill's input surface in v1 — extend later if needed.
+- Deviations:
+  - SKILL.md does not include a dedicated `wikilinks: []` frontmatter array; wikilinks live in the body, matching every Phase 1 card. This is consistent with `lib/cards.parse_card` walking both frontmatter and body for wikilinks, so either would work — body-only keeps the YAML small.
+  - The smoke test in SKILL.md uses a `_scratch` graph with a hand-seeded anchor card; the spec described it loosely. The pytest suite covers the same paths automatically.
+

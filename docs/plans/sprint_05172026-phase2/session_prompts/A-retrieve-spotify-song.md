@@ -67,3 +67,20 @@ git -C /private/tmp/mg-wt-A add .
 git -C /private/tmp/mg-wt-A commit -m "feat(skills): retrieve-spotify-song MCP-backed lookup skill"
 ```
 Tell PM the commit SHA and HANDOFF location.
+
+---
+
+HANDOFF (Track A):
+- SKILL.md path: `/private/tmp/mg-wt-A/.claude/skills/retrieve-spotify-song/SKILL.md` (lands at `.claude/skills/retrieve-spotify-song/SKILL.md` after merge)
+- Trigger phrases registered: "find [X] on Spotify", "lookup [X] on Spotify" / "look up [X] on Spotify", "Spotify URL for [X]", "Spotify link for [X]", "verify this Spotify URL: [url]", "search Spotify for [X]", "what's the Spotify ID for [X]", plus programmatic invocation from add-node / add-edge / expand-graph / family agent
+- Spotify MCP tool name expected: `mcp__68e7e171-8619-450d-bfc7-458af6964130__search` — confirmed still registered in this sub-agent's deferred tool list (Phase 1's tool, still present)
+- normalize_url.py helper: `/private/tmp/mg-wt-A/.claude/skills/retrieve-spotify-song/scripts/normalize_url.py`, public function names: `normalize_spotify_url(url: str) -> str | None`
+- /tmp/test_results_track-a.txt: FAIL=0 (11 passed; full suite 62 passed including Phase 1's 51)
+- Integration gotchas for Track B (add-node):
+  - Skill returns a bare canonical URL string only; caller (add-node) writes it into card frontmatter under `spotify_url:`.
+  - Skill is read-only on the graph — it does NOT touch cards, edges, or lint. add-node owns those.
+  - With multiple MCP candidates the skill BLOCKS for user selection. add-node calling in batch should set `auto_pick=true` semantics ONLY when willing to accept that single-result lookups proceed without prompting; multi-result lookups always prompt regardless.
+  - On `MCP_UNAVAILABLE` / `MCP_ERROR` / `NOT_FOUND` the skill returns a sentinel string with that prefix — callers must check for these prefixes and refuse to write a `spotify_url` field rather than embedding the sentinel as a URL.
+  - Helper is importable via `importlib.util.spec_from_file_location` (see test file) — no package install. For non-Python callers, treat the canonical-URL contract as the source of truth.
+- Deviations from spec: none. Added bonus normalization cases (locale prefix `/intl-xx/`, `spotify:` URI form, `http://` upgrade) beyond the four required test cases; all four required cases are covered.
+
