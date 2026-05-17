@@ -2,7 +2,7 @@
 
 **Written:** 2026-05-17
 **Sprint folder:** `/Users/alecchapman/Code/music-graphs/docs/plans/sprint_05172026-phase2/`
-**Main branch HEAD:** `5a8665d pm: Track G (pittsburgh-jazz dogfood) merged; registry signed`
+**Main branch HEAD:** `a4da7d1 pm: Track H merged + Z1/Z2 signed; registry updated`
 **Demo target:** 2026-06-07
 **Task tracking:** None — `music-graphs` is not registered in task_lib. Sprint tracked via this folder + `test_registry.md`.
 
@@ -10,132 +10,102 @@
 
 ## Current state
 
-**8 of 9 tracks merged.** Only Track H (bowie-covers expansion via `expand-graph`) remains, plus manual M1/M2 family-agent verification by Alec. The sprint is otherwise demo-ready: 100 pytest pass, 0 lint errors across all three graphs, all four foundation skills in place, family agent + setup docs shipped, band-x dogfood (5 albums) and pittsburgh-jazz dogfood (12 albums) both complete with all Alec-specified URLs and personal notes integrated. Worktree for H is pre-created at `/private/tmp/mg-wt-H` on branch `sprint/bowie-covers-expansion`; H is the only foreground track that still needs Alec in the loop (for `expand-graph` candidate approval).
+**All 9 tracks merged. All automated registry rows ✅.** The sprint is functionally complete on the automated side: 100 pytest pass, lint clean across all 3 graphs, bowie-covers expanded from 3 to 10 cover artists. The only remaining items before sprint closeout are:
 
-| Wave | Track | Status | Merge SHA |
-|---|---|---|---|
-| Pre | Tony Gilkyson rename + sprint kickoff | ✅ | `6b76576` |
-| 1 | A `retrieve-spotify-song` | ✅ | `c3cccb1` |
-| 1 | B `add-node` | ✅ | `6f6195c` |
-| 2 | C `add-edge` | ✅ | `7999062` |
-| 2 | D `expand-graph` | ✅ | `11a5d45` |
-| 3 | E family-agent + setup docs | ✅ | `8a9cfa8` |
-| 3 | F band-x dogfood (5 albums) | ✅ | `735e88a` |
-| 3 | G pittsburgh-jazz dogfood (12 albums + notes) | ✅ | `6c9c8dd` |
-| 4 | I cover images (M12) | ✅ | `b44a25f` |
-| 4 | **H bowie-covers via expand-graph + Nirvana retry** | ⏳ **next** | — |
+1. **Alec's additional feature requests** — Alec said after completing Track H he'd spec new features needed before sharing with family collaborators. He has not described these yet; the next session should collect them first.
+2. **Manual M1–M10** — Alec must sign off on the family-agent UX and UI spot-checks.
+3. **Sprint closeout** — write `_sprint-closeout.md` following the Phase 1 pattern.
 
-Graph counts after merges:
-- band-x: 13n/49e → 18n/55e (+5 nodes, +6 edges)
-- pittsburgh-jazz: 16n/37e → 28n/52e (+12 nodes, +15 edges)
-- bowie-covers: unchanged (Track H's job)
+| Track | Status | Merge SHA |
+|---|---|---|
+| Pre (Tony Gilkyson rename) | ✅ | `6b76576` |
+| A `retrieve-spotify-song` | ✅ | `c3cccb1` |
+| B `add-node` | ✅ | `6f6195c` |
+| C `add-edge` | ✅ | `7999062` |
+| D `expand-graph` | ✅ | `11a5d45` |
+| E family-agent + setup docs | ✅ | `8a9cfa8` |
+| F band-x dogfood (5 albums) | ✅ | `735e88a` |
+| G pittsburgh-jazz dogfood (12 albums + notes) | ✅ | `6c9c8dd` |
+| I cover images (M12) | ✅ | `b44a25f` |
+| H bowie-covers expansion (7 covers + Nirvana URL) | ✅ | `e1220ee` |
+
+Graph counts after Track H:
+- band-x: 18n/55e (unchanged from Track F)
+- pittsburgh-jazz: 28n/52e (unchanged from Track G)
+- bowie-covers: 13 cards → 36 cards (23 new: 10 cover artists, 7 albums/singles, 6 songs; Nirvana URL resolved)
+
+Automated registry: **all rows ✅** (H1, H2, Z1, Z2 signed off this session).
+Manual registry: **M1–M10 all ⬜** — none yet attempted.
 
 ---
 
 ## What happened this session
 
-1. **Resumed sprint kickoff.** Drafted, then locked the Phase 2 project spec at `docs/plans/sprint_05172026-phase2/project_spec.md` after Alec resolved all 5 open questions (cloud-primary agent surface, demo 2026-06-07, album-only default, skill-proposed picks for Exene/Doe, candidate ceiling 5–10).
-2. **Pre-sprint setup.** Renamed `person-troy-gilkyson.md` → `person-tony-gilkyson.md` and updated the wikilink in `group-x.md`. Retried Nirvana MTV Unplugged Spotify lookup via MCP — still no match, deferred into Track H.
-3. **Wrote 9 track prompts + test registry + this PM continuation file** in the new sprint folder. Committed as `6b76576` (kickoff).
-4. **Wave 1 (A + B) launched parallel as background sub-agents.** Both completed clean: A produced `.claude/skills/retrieve-spotify-song/` with fail-loud MCP contract and URL normalizer; B produced `.claude/skills/add-node/` with lint-gate-and-rollback. 11 + 14 helper tests respectively, FAIL=0 in both. Merged B then A.
-5. **Wave 2 (C + D) launched parallel.** C produced `.claude/skills/add-edge/` (10 tests, dangling-target detection, duplicate-edge detection); D produced `.claude/skills/expand-graph/` (14 tests, candidate ceiling clamp, dry-run mode, default `search_fn` raises so no training-data candidates leak). Rebased D onto C, merged in order.
-6. **Wave 3 launched in stages.** Track E (family agent) ran as a background sub-agent — produced `.claude/agents/music-graphs-builder.md` + `docs/family-setup.md` for both claude.ai/code (cloud, primary) and local Claude Code (fallback), with a rehearsed-against-scratch-graph end-to-end transcript. M1/M2 real-session checks explicitly deferred to Alec.
-7. **Track F (band-x dogfood) ran foreground with Alec.** I used the skill helpers directly to write 5 album cards: Ashgrove (Dave Alvin), The Bonebrake Syncopators Play Coleman, Johny Walk Don't Run Paulene (Billy Zoom), Somewhere Gone (Exene Cervenka), A Year in the Wilderness (John Doe). Alec confirmed verified Spotify URLs for the three pre-specified albums and approved my MCP-sourced picks for Exene and John Doe.
-8. **Track I (cover images) ran in parallel background.** Picked one image per graph (X 1979 LA; Bowie 2002; Erroll Garner 1947), downloaded from Wikimedia Commons, added a `/graph-images/<slug>/<file>` route to `app.py`. Three `<img>` tags on home page, all return 200.
-9. **Track G (pittsburgh-jazz dogfood) ran foreground with Alec.** 12 albums written through the skills: Gene Harris Trio Plus One, No Need for Words, Sweet Candor, Concert by the Sea, Piano Moods, The Peaceful Side, Bass on Top, Song for My Father, Keep the Faith, Kind of Blue (Legacy Edition), ...And His Mother Called Him Bill, Passion Flower. Alec added 4 additional Spotify URLs mid-session (Roger Humphries leader album, Paul Chambers as sideman on Kind of Blue, plus two Strayhorn tribute albums). Three person cards (Sean Jones, Maureen Budway) received hand-appended personal notes via Edit tool because the skills lack a "free-text body addendum" operation. All 10 person cards now have ≥1 album/track wikilink — coverage requirement met.
-10. **Did NOT start Track H.** Worktree was created and Alec was about to approve the first batch of expand-graph candidates; Alec interrupted and asked for a session handoff instead.
+1. **Resumed sprint manager** from prior `_pm-continuation.md`. Verified worktree `/private/tmp/mg-wt-H` intact on `sprint/bowie-covers-expansion`.
+2. **Generated expand-graph candidates** for bowie-covers via Spotify MCP: 5 PM-proposed (Mott the Hoople, Philip Glass, Peter Gabriel, Bauhaus, Cat Power). Alec approved all 5 and added 2 more via Spotify URLs: "Kooks" by Orrin Evans/Rosenwinkel/Eubanks and "Absolute Beginners" by Carla Bruni. Alec also provided the Nirvana MTV Unplugged album URL that had been unresolvable in prior sessions.
+3. **Verified all candidates** via Spotify MCP (artist IDs) and WebFetch (track/album identification). Compiled full list of 7 new cover entries with verified Spotify URLs.
+4. **Wrote `/tmp/track-h-driver.py`** — one-shot Python driver calling `write_card` (run_lint=False) for all 23 new cards: 6 songs, 2 groups, 7 persons, 7 albums/singles, plus Nirvana frontmatter update.
+5. **Ran driver** in the worktree. Lint caught one slug collision (album "All the Young Dudes" disambiguated to `all-the-young-dudes-album` because the song took `all-the-young-dudes`). Fixed two wikilinks via Python inline. Lint clean.
+6. **100 pytest pass.** Committed `e1220ee`, rebased onto main, ff-merged, worktree torn down.
+7. **Signed off H1, H2, Z1, Z2** in `test_registry.md`. Committed `a4da7d1`.
+8. **Did not collect Alec's additional feature requests** — he said he'd give them after Track H was done; session ended before he described them.
 
 ---
 
 ## Immediate next steps (in order)
 
-### Step 1 — Resume as sprint manager
-Read this file. Verify repo state with `git log --oneline -3` (expect `5a8665d` at HEAD) and `git worktree list` (expect `main` + `/private/tmp/mg-wt-H` on `sprint/bowie-covers-expansion`). If the worktree is gone (it lives in `/private/tmp/` which clears on reboot), recreate it:
-```bash
-git worktree add /private/tmp/mg-wt-H -b sprint/bowie-covers-expansion main
-ln -sf /Users/alecchapman/Code/music-graphs/.venv /private/tmp/mg-wt-H/.venv
-```
-(If the branch already exists, drop `-b sprint/bowie-covers-expansion` and add `sprint/bowie-covers-expansion` as the last arg instead.)
+### Step 1 — Collect Alec's additional feature requests
 
-### Step 2 — Track H, in foreground (Alec must be present)
-Track H prompt: `docs/plans/sprint_05172026-phase2/session_prompts/H-bowie-covers-expansion.md`. The mid-session approach the prior PM was taking:
-- Read `graphs/bowie-covers/cards/note-bowie-songbook.md` to state the inclusion criterion back to Alec.
-- Generate 5–10 candidate Bowie covers that extend the existing cross-genre diversity (Brazilian acoustic / jazz piano trio / grunge are covered; aim for classical, glam, soul, indie, etc.).
-- Verify each candidate's Spotify URL via MCP (`mcp__68e7e171-8619-450d-bfc7-458af6964130__search`). Where MCP can't surface (e.g., licensor-restricted), document `spotify_url: null  # MCP search exhausted` in the frontmatter.
-- Surface the candidate list to Alec with proposed wikilinks to existing songs/persons. Wait for approval.
-- For approved candidates, write a Python driver script (pattern: `/tmp/track-f-driver.py` and `/tmp/track-g-driver.py`) that calls `write_card` + `add_edge` with explicit `repo_root=` arguments.
-- Retry Nirvana MTV Unplugged URL during this session: search Spotify for "About a Girl Unplugged Nirvana" (track) or "Nirvana Unplugged" (different query phrasing). If still no match, write `spotify_url: null  # MCP search exhausted 2026-05-17` into the frontmatter of `graphs/bowie-covers/cards/album-unplugged-in-new-york.md` and call it done.
-- Lint + pytest + smoke check (use `app.test_client()` via `import app as a`, not a real Flask process — port 8766 was already bound on Alec's machine earlier).
-- Append HANDOFF block to `H-bowie-covers-expansion.md`, commit, rebase onto main, ff-merge, tear down worktree, sign off rows H1/H2 in the test registry, commit the PM signoff.
+Alec said at the start of this session: *"Let's finish the Bowie extract and then add a few additional features to the MVP that is needed before sharing with family collaborators. I'll give more details about the new requests after completing the bowie extract."*
 
-Candidate ideas the prior PM had in flight (verify before proposing):
-- Mott the Hoople — All the Young Dudes (1972) — Bowie-written glam handover
-- Lulu — The Man Who Sold the World (1974) — Bowie-produced UK #3
-- Phillip Glass — Symphony No. 4 "Heroes" (1996) — classical adaptation
-- Peter Gabriel — Heroes (Scratch My Back, 2010) — orchestral solo voice
-- Beck — Sound and Vision (2013) — viral 360° orchestra
-- Bauhaus — Ziggy Stardust (1982) — goth single
-- TV on the Radio — Heroes — indie rock
-- Cat Power — Space Oddity — sparse indie folk
-Surface these (or your own picks) to Alec; he overrides freely.
+Track H is now complete. Ask Alec: **"What are the additional features you want before sharing with Clare and Jeremiah?"** Then plan them as new tracks or inline changes depending on scope.
 
-### Step 3 — Manual M1/M2 verification (Alec)
-After H merges, the only remaining items in the test registry are M1 (family-agent end-to-end on local Claude Code) and M2 (same on claude.ai/code). The PM can't do these — they need Alec to actually run a fresh chat with the music-graphs-builder agent in both environments and add at least one node + one edge to a graph without ever seeing YAML. Surface these to Alec after H merges and ask him when he wants to schedule them.
+### Step 2 — Manual M1–M10 verification (Alec)
 
-### Step 4 — Close the sprint
-Once H is merged and M1/M2 are signed off, write `_sprint-closeout.md` following the Phase 1 pattern (`docs/plans/sprint_05172026/_sprint-closeout.md`). Tag with a Phase 2 version tag (e.g., `v0.2-phase2-demo`). The closeout should capture: phase-2 delivered scope, the skill-friction notes from F and G's HANDOFFs (especially the `write_card.py` `repo_root` inference bug, the missing free-text-body-addendum operation, and the album-only default the spec locked), and any Phase 3 wishlist (cloud hosting? new graphs?).
+After any additional features are implemented, surface the manual checklist to Alec and ask when he wants to run through it. The M-rows are in `docs/plans/sprint_05172026-phase2/test_registry.md` lines 40–52. Key ones:
+
+- **M1** — Local Claude Code: family agent adds one node + one edge without seeing YAML
+- **M2** — claude.ai/code: same on cloud surface
+- **M3** — Cover images render on `/` for all 3 graphs (no broken images)
+- **M4** — All 3 graph views load with correct node/edge counts
+- **M8** — bowie-covers additions are accurate (no hallucinated covers)
+- **M9** — `expand-graph` workflow feels right to Alec
+- **M10** — Setup docs (Clare/Jeremiah) make sense to a non-technical reader
+
+### Step 3 — Sprint closeout
+
+Once all M-rows are signed, write `docs/plans/sprint_05172026-phase2/_sprint-closeout.md` following the Phase 1 template at `docs/plans/sprint_05172026/_sprint-closeout.md`. Capture:
+- Phase 2 delivered scope
+- Skill-friction notes from F, G, H HANDOFFs (esp. `write_card.py` `repo_root` bug, missing free-text-body-addendum, Spotify licensor errors)
+- Phase 3 wishlist (cloud hosting? new graphs? `add-note` skill?)
+
+Then tag: `git tag v0.2-phase2-demo`.
 
 ---
 
 ## Key decisions (do not re-litigate)
 
-- **Sprint folder name:** `sprint_05172026-phase2` (hyphenated form, not the standard `sprint_MMDDYYYY`) — Alec requested explicitly at kickoff.
-- **Family-agent surface:** claude.ai/code primary, local Claude Code fallback. Agent + skills must be environment-identical (no env-specific branches). Spotify MCP setup is the one per-machine/per-account dependency.
-- **Spotify URL policy:** verified-via-MCP only. Alec-provided URLs are treated as verified once their title/artist is confirmed via WebFetch on the open.spotify.com page. `spotify_url: null` with a documented reason is the locked fallback when MCP can't surface a track.
-- **Album-only default for new content.** Track cards only when there's a narrative reason (e.g., Sean Jones cross-appearance on Maureen Budway's "Sweet Lover No More" — handled as a body wikilink with an add-edge call, not a separate track card).
-- **Exene/John Doe albums:** picked via MCP top-results, Alec approved at the moment of writing. Somewhere Gone (Cervenka, 2009) and A Year in the Wilderness (Doe, 2007).
-- **Pittsburgh-jazz scope override:** the G prompt's "Not in scope" said "no albums for artists not already in the graph", but Alec explicitly approved 4 additional albums whose *leader* isn't in the graph (Horace Silver, Miles Davis, Duke Ellington, Fred Hersch). Treated as in-scope because each album's wikilinks point to existing-in-graph people; the leader is incidental. Loosen the spec wording in Phase 3.
-- **Worktree launch model from Phase 1 carried forward:** PM pre-creates worktrees at `/private/tmp/mg-wt-<X>`, sub-agents do NOT call `EnterWorktree` and use `git -C <path>` for every git op. Workflow rule reaffirmed across all 6 sub-agent launches this session — no incidents.
-- **F and G ran as foreground PM-driven dogfood**, not background sub-agents. The PM (me) wrote one-shot Python drivers (`/tmp/track-f-driver.py`, `/tmp/track-g-driver.py`) calling the skill helpers directly. This was the right call — Alec needed to be in the loop for album-choice approvals, and the dogfood is more honest when the PM uses the same skill API a family-member agent would.
-- **`spotify_url: null` insertion in frontmatter** happens after `write_card` returns, via a small lines-array edit that inserts the `null  # <reason>` line before the closing `---`. The skill's frontmatter writer omits a key when its value is None — that's the right default for the family agent, but Track H needs to keep documenting the null reason when applicable.
+- **All 7 cover entries are approved.** Alec confirmed all 5 PM-proposed candidates and added 2 of his own. No further approval needed for bowie-covers content.
+- **Bauhaus exception:** "Ziggy Stardust" is a single with no album home. Using track URL as `spotify_url` is the accepted workaround (same as Carla Bruni "Absolute Beginners" and the Orrin Evans `#knowingishalfthebattle` album which is MCP-restricted). The single is represented as `type: album` with the track URL.
+- **`all-the-young-dudes-album` slug**: The Mott the Hoople album was disambiguated because the song card `song-all-the-young-dudes` claimed the slug first. All internal wikilinks use `[[album:all-the-young-dudes-album]]`. This is final — don't rename.
+- **Alec's new feature requests are unknown** — don't guess or pre-implement anything. Collect them in the next session first.
 
 ---
 
 ## Blocking questions
 
-None for the next PM session. Track H can proceed as soon as Alec is available to approve `expand-graph` candidates. The 4 manual rows (M1, M2, plus H's own M-rows) are the only items that can't be PM-resolved.
+- **What additional features does Alec want before family sharing?** (Step 1 above — must ask before doing anything else)
 
 ---
 
-## Skill-bug backlog (surfaced during dogfood, deferred from this sprint)
+## Skill-bug backlog (unchanged from prior session)
 
-These are real bugs the F and G HANDOFFs documented. None blocked merging — workarounds exist — but they should be fixed before Phase 3 or before non-Alec users actually run the family agent against the real skills.
+These are real bugs surfaced during dogfood. None block the current sprint. Fix before Phase 3 or before non-Alec users run the family agent:
 
-1. **`write_card.py` `repo_root` inference is wrong.** `Path(__file__).resolve().parents[3]` resolves to `.claude/` instead of the worktree. Fix: `parents[4]`. Workaround until then: every caller passes explicit `repo_root=`.
-2. **No "add free-text body addendum" operation.** The personal-notes additions on `person-sean-jones.md` and `person-maureen-budway.md` had to be hand-edited via the Edit tool. `add-edge` only writes relationship-shaped sentences between two slugs. A future `add-note` / `append-body` skill closes this gap and is high-value for the family agent (which will hit this constantly).
-3. **Spotify MCP `ALL_CONTENT_LICENSOR_RESTRICTED` errors are frequent for older catalog.** The skill correctly falls back to null + reason, but the family agent should explain this category in plain English rather than relaying the raw error code.
-4. **add-edge relationship verb requires per-call thinking.** "recorded" vs "appears on" vs "honored on" — caller has to vary by case. Family agent should hide this behind a small relationship taxonomy ("leader" / "sideman" / "tribute").
-
----
-
-## Files written this session
-
-| File | Action |
-|---|---|
-| `docs/plans/sprint_05172026-phase2/project_spec.md` | Created, locked |
-| `docs/plans/sprint_05172026-phase2/test_registry.md` | Created; all rows except H1/H2 and M1–M10 signed off |
-| `docs/plans/sprint_05172026-phase2/session_prompts/{A,B,C,D,E,F,G,H,I}-*.md` | Created (track prompts) + HANDOFF blocks appended by each track |
-| `docs/plans/sprint_05172026-phase2/session_prompts/_pm-continuation.md` | This file (overwritten as continuation) |
-| `graphs/band-x/cards/person-tony-gilkyson.md` | Renamed from `person-troy-gilkyson.md`; `group-x.md` wikilink updated |
-| `.claude/skills/{retrieve-spotify-song,add-node,add-edge,expand-graph}/` | Created (Wave 1+2 deliverables) |
-| `.claude/agents/music-graphs-builder.md`, `docs/family-setup.md` | Created (Track E) |
-| `graphs/band-x/cards/album-*.md` (5 new) | Created (Track F) |
-| `graphs/band-x/cards/person-*.md` (5 modified) | Modified (reciprocal edges, Track F) |
-| `graphs/pittsburgh-jazz/cards/album-*.md` (12 new) | Created (Track G) |
-| `graphs/pittsburgh-jazz/cards/person-*.md` (9 modified) | Modified (reciprocal edges + 2 personal-notes additions, Track G) |
-| `graphs/{band-x,bowie-covers,pittsburgh-jazz}/README.md` | Updated `cover_image:` field (Track I) |
-| `graphs/{band-x,bowie-covers,pittsburgh-jazz}/images/<file>.jpg` | Created (3 new image files, Track I) |
-| `app.py` | Added `/graph-images/<slug>/<file>` route + `_resolve_cover_image` helper (Track I) |
+1. **`write_card.py` `repo_root` inference wrong** — `parents[3]` resolves to `.claude/` in a worktree. Workaround: always pass `repo_root=` explicitly.
+2. **No "add free-text body addendum" operation** — personal notes on person cards required direct Edit tool calls.
+3. **Spotify `ALL_CONTENT_LICENSOR_RESTRICTED` errors** — family agent should explain in plain English.
+4. **`add-edge` relationship verb** — caller must choose "recorded" vs "appears on" etc. per-call. A small taxonomy would help the family agent.
 
 ---
 
@@ -143,11 +113,8 @@ These are real bugs the F and G HANDOFFs documented. None blocked merging — wo
 
 | File | Role |
 |---|---|
-| `docs/plans/sprint_05172026-phase2/project_spec.md` | Locked spec; the source of truth for what Phase 2 is. |
-| `docs/plans/sprint_05172026-phase2/test_registry.md` | Pass/fail gate. Two rows (H1, H2) and ten manual rows (M1–M10) outstanding. |
-| `docs/plans/sprint_05172026-phase2/session_prompts/H-bowie-covers-expansion.md` | Track H prompt — read first thing in the next session. |
-| `docs/plans/sprint_05172026/_sprint-closeout.md` | Phase 1 closeout — the template for Phase 2's closeout (Step 4 above). |
-| `.claude/skills/expand-graph/SKILL.md` and `scripts/expand_graph.py` | The skill Track H exercises; read its HANDOFF in Track D's prompt for integration gotchas. |
-| `.claude/skills/add-node/scripts/write_card.py` | Note the `repo_root` bug — always pass `repo_root=REPO` explicitly until fixed. |
-| `tools/lint_graphs.py` | Always green at sprint close — run before any commit. |
-| `/tmp/track-f-driver.py`, `/tmp/track-g-driver.py` | Reference one-shot drivers from F and G — Track H's driver should follow the same pattern. (These live in /tmp and may be cleared; the patterns are what matters.) |
+| `docs/plans/sprint_05172026-phase2/test_registry.md` | Pass/fail gate — all automated rows ✅, M1–M10 outstanding |
+| `docs/plans/sprint_05172026-phase2/session_prompts/_pm-continuation.md` | This file — re-entry point for next PM session |
+| `docs/plans/sprint_05172026/_sprint-closeout.md` | Phase 1 closeout — template for Phase 2 closeout |
+| `graphs/bowie-covers/cards/` | 36 cards total after Track H |
+| `tools/lint_graphs.py` | Always green — run before any commit |
