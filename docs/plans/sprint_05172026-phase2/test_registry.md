@@ -18,7 +18,7 @@
 | C2 | C | `add-edge` warns on dangling wikilinks (target slug doesn't exist) | `DanglingTargetError` raised by default (`on_dangling="abort"`); `"forward"` mode opt-in; covered in tests | ✅ (merge 7999062) |
 | D1 | D | `expand-graph` surfaces 5–10 candidates and pauses for approval | Ceiling clamp `[1,10]` enforced in `_clamp_ceiling()`; overflow count returned; 14 helper tests pass | ✅ (merge 11a5d45) |
 | D2 | D | Approved candidates flow through `add-node` + `add-edge` (no direct file writes) | Default `search_fn` raises `NotImplementedError`; injected `add_node_fn`/`add_edge_fn` are the only write path; dry-run sentinel test guarantees no side effects | ✅ (merge 11a5d45) |
-| E1 | E | Family-agent definition exists and loads in both Claude Code and claude.ai/code | Manual check via `/agents` list in both environments | ⬜ |
+| E1 | E | Family-agent definition exists and loads in both Claude Code and claude.ai/code | `.claude/agents/music-graphs-builder.md` + `docs/family-setup.md` present; rehearsal node+edge add executed cleanly against scratch graph. Real-session M1/M2 deferred to Alec. | ✅ (merge 8a9cfa8) |
 | F1 | F | 5 new band-x album cards exist (Cervenka, Doe, Alvin/Ashgrove, Bonebrake, Zoom) | `ls graphs/band-x/cards/album-*.md` shows ≥5 new files | ⬜ |
 | F2 | F | All 5 albums have verified `spotify_url` in frontmatter | grep + visual check; each URL was MCP-sourced | ⬜ |
 | F3 | F | Tony Gilkyson rename complete and lint-clean (pre-sprint; just confirm still good) | `lint_graphs.py band-x` exits 0; no `troy-gilkyson` references remain | ✅ (pre-sprint) |
