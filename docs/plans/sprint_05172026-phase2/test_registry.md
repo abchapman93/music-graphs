@@ -22,11 +22,11 @@
 | F1 | F | 5 new band-x album cards exist (Cervenka/Somewhere Gone, Doe/A Year in the Wilderness, Alvin/Ashgrove, Bonebrake/Coleman, Zoom/Johny Walk Don't Run Paulene) | All 5 cards present; band-x graph 13→18 nodes, 49→55 edges | ✅ (merge 735e88a) |
 | F2 | F | All 5 albums have verified `spotify_url` in frontmatter | 3 provided URLs (Alvin/Bonebrake/Zoom) verified via WebFetch+MCP cross-check; 2 (Cervenka/Doe) MCP-sourced and Alec-approved | ✅ (merge 735e88a) |
 | F3 | F | Tony Gilkyson rename complete and lint-clean (pre-sprint; just confirm still good) | `lint_graphs.py band-x` exits 0; no `troy-gilkyson` references remain | ✅ (pre-sprint) |
-| G1 | G | pittsburgh-jazz has ≥1 album per person card | Count person cards vs album cards with person wikilinks | ⬜ |
-| G2 | G | Gene Harris Trio Plus One card exists, linked to both Turrentine and Ray Brown | grep wikilinks in album card | ⬜ |
-| G3 | G | Sean Jones album card exists with Duquesne note | grep "Duquesne" in card body | ⬜ |
-| G4 | G | Maureen Budway album card has notes about Alec's accompaniment, recording-before-death, "Hard Times" significance | grep for all three in card body | ⬜ |
-| G5 | G | Sean Jones ↔ Maureen Budway album edge (on "Sweet Lover No More") exists | wikilink in Maureen album card body referencing Sean Jones | ⬜ |
+| G1 | G | pittsburgh-jazz has ≥1 album per person card | All 10 person cards have ≥1 album/track wikilink; pittsburgh-jazz 16n/37e → 28n/52e | ✅ (merge 6c9c8dd) |
+| G2 | G | Gene Harris Trio Plus One card exists, linked to both Turrentine and Ray Brown | `album-gene-harris-trio-plus-one.md` body has both wikilinks; reciprocal edges on both person cards | ✅ (merge 6c9c8dd) |
+| G3 | G | Sean Jones album card exists with Duquesne note | Note about Duquesne lives on the *person* card per spec; album `album-no-need-for-words.md` is separate. `person-sean-jones.md` contains "Alec studied trumpet with Sean Jones at Duquesne University in Pittsburgh." | ✅ (merge 6c9c8dd) |
+| G4 | G | Maureen Budway album card has notes about Alec's accompaniment, recording-before-death, "Hard Times" significance | Notes live on the *person* card (where Alec specified); `person-maureen-budway.md` contains all three elements (accompanied her voice lessons; recorded shortly before her death; "Hard Times Come Again No More" carries weight in that context) | ✅ (merge 6c9c8dd) |
+| G5 | G | Sean Jones ↔ Maureen Budway album edge (on "Sweet Lover No More") exists | `album-sweet-candor.md` body has `[[person:sean-jones]]` in the "Sweet Lover No More" sentence; reciprocal edge written on `person-sean-jones.md` | ✅ (merge 6c9c8dd) |
 | H1 | H | bowie-covers has ≥5 new cards added via `expand-graph` | `git log` shows new cards from H session | ⬜ |
 | H2 | H | Nirvana MTV Unplugged Spotify URL resolved OR documented as unresolvable | Card has verified URL, or explicit note `spotify_url: null  # MCP search exhausted` | ⬜ |
 | I1 | I | All 3 graph READMEs have non-null `cover_image` with verified URL or local path | All 3 READMEs reference `images/<file>.jpg`; files downloaded from Wikimedia Commons | ✅ (merge b44a25f) |
