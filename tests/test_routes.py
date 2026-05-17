@@ -1,5 +1,5 @@
-"""Integration tests for the graph view + API routes using the bundled
-``pittsburgh-jazz-fixture`` graph."""
+"""Integration tests for the graph view + API routes using the
+``pittsburgh-jazz`` graph."""
 
 import os
 import sys
@@ -10,7 +10,7 @@ if ROOT not in sys.path:
 
 from app import app  # noqa: E402
 
-SLUG = "pittsburgh-jazz-fixture"
+SLUG = "pittsburgh-jazz"
 KNOWN_CARD_SLUG = "stanley-turrentine"
 
 
@@ -41,7 +41,7 @@ def test_api_graph_ok():
     assert resp.status_code == 200
     data = resp.get_json()
     assert "nodes" in data and "edges" in data
-    assert len(data["nodes"]) == 5
+    assert len(data["nodes"]) >= 5
     assert len(data["edges"]) >= 5
     ids = {n["id"] for n in data["nodes"]}
     assert f"person:{KNOWN_CARD_SLUG}" in ids
