@@ -27,12 +27,12 @@
 | G3 | G | Sean Jones album card exists with Duquesne note | Note about Duquesne lives on the *person* card per spec; album `album-no-need-for-words.md` is separate. `person-sean-jones.md` contains "Alec studied trumpet with Sean Jones at Duquesne University in Pittsburgh." | ✅ (merge 6c9c8dd) |
 | G4 | G | Maureen Budway album card has notes about Alec's accompaniment, recording-before-death, "Hard Times" significance | Notes live on the *person* card (where Alec specified); `person-maureen-budway.md` contains all three elements (accompanied her voice lessons; recorded shortly before her death; "Hard Times Come Again No More" carries weight in that context) | ✅ (merge 6c9c8dd) |
 | G5 | G | Sean Jones ↔ Maureen Budway album edge (on "Sweet Lover No More") exists | `album-sweet-candor.md` body has `[[person:sean-jones]]` in the "Sweet Lover No More" sentence; reciprocal edge written on `person-sean-jones.md` | ✅ (merge 6c9c8dd) |
-| H1 | H | bowie-covers has ≥5 new cards added via `expand-graph` | `git log` shows new cards from H session | ⬜ |
-| H2 | H | Nirvana MTV Unplugged Spotify URL resolved OR documented as unresolvable | Card has verified URL, or explicit note `spotify_url: null  # MCP search exhausted` | ⬜ |
+| H1 | H | bowie-covers has ≥5 new cards added via `expand-graph` | 23 new cards (7 cover artists, 7 albums/singles, 6 songs, 2 groups, 1 URL fix) added in merge e1220ee; lint clean | ✅ (merge e1220ee) |
+| H2 | H | Nirvana MTV Unplugged Spotify URL resolved OR documented as unresolvable | `album-unplugged-in-new-york.md` now has `spotify_url: https://open.spotify.com/album/1To7kv722A8SpZF789MZy7` (Alec-provided, verified via WebFetch) | ✅ (merge e1220ee) |
 | I1 | I | All 3 graph READMEs have non-null `cover_image` with verified URL or local path | All 3 READMEs reference `images/<file>.jpg`; files downloaded from Wikimedia Commons | ✅ (merge b44a25f) |
 | I2 | I | Cover images render on home page (no broken-image icons) | `/graph-images/<slug>/<file>` route added in app.py; home page returns 3 `<img class="cover">` tags; HEAD requests return 200 for all three | ✅ (merge b44a25f) |
-| Z1 | all | Phase 1 pytest still passes (51 tests, FAIL=0) | `pytest` from repo root, sink to `/tmp/test_results_z1.txt` | ⬜ |
-| Z2 | all | `lint_graphs.py` reports 0 errors across all 3 graphs | Run lint at end of sprint | ⬜ |
+| Z1 | all | Phase 1 pytest still passes (51 tests, FAIL=0) | 100 passed, 0 failed (suite grew from 51→100 with Phase 2 skill tests) | ✅ (2026-05-17) |
+| Z2 | all | `lint_graphs.py` reports 0 errors across all 3 graphs | 0 errors across band-x, bowie-covers, pittsburgh-jazz | ✅ (2026-05-17) |
 
 ---
 
