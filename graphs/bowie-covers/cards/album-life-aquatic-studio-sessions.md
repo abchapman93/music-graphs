@@ -2,7 +2,7 @@
 type: album
 name: "The Life Aquatic Studio Sessions Featuring Seu Jorge"
 canonical_link: https://en.wikipedia.org/wiki/The_Life_Aquatic_Studio_Sessions
-spotify_url: https://open.spotify.com/album/3KZTRDcQfL36gKjPJ81qIz
+spotify_url: https://open.spotify.com/album/22o8Fo8iJJ9gbBJQSUy5wY
 release_year: 2005
 ---
 

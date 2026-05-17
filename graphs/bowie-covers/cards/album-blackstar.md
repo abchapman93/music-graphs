@@ -2,7 +2,7 @@
 type: album
 name: "Blackstar"
 canonical_link: https://en.wikipedia.org/wiki/Blackstar_(album)
-spotify_url: https://open.spotify.com/album/7eyQXxuf2nGj9d2367Gi5f
+spotify_url: https://open.spotify.com/album/0vxg8oJKDu3i0bXQu7vEpi
 release_year: 2016
 ---
 

@@ -2,7 +2,7 @@
 type: album
 name: "These Are the Vistas"
 canonical_link: https://en.wikipedia.org/wiki/These_Are_the_Vistas
-spotify_url: https://open.spotify.com/album/2NkA8YxHxfBdj0nybGY9XJ
+spotify_url: https://open.spotify.com/album/3iVI9khuzGp8ohGEJLUi6Q
 release_year: 2003
 ---
 

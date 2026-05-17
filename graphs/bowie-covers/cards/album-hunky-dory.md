@@ -2,7 +2,7 @@
 type: album
 name: "Hunky Dory"
 canonical_link: https://en.wikipedia.org/wiki/Hunky_Dory
-spotify_url: https://open.spotify.com/album/0hvT3yIEysuuvkK73vgdcW
+spotify_url: https://open.spotify.com/album/6fQElzBNTiEMGdIeY0hy5l
 release_year: 1971
 ---
 

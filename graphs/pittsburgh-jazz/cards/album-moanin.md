@@ -2,7 +2,7 @@
 type: album
 name: "Moanin'"
 canonical_link: https://en.wikipedia.org/wiki/Moanin%27_(album)
-spotify_url: https://open.spotify.com/album/0Tj1tCYsB9YEDsAcd1RuD2
+spotify_url: https://open.spotify.com/album/1pyDqJKkoxy84yeMK8ebF2
 release_year: 1959
 ---
 

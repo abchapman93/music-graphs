@@ -2,7 +2,6 @@
 type: album
 name: "MTV Unplugged in New York"
 canonical_link: https://en.wikipedia.org/wiki/MTV_Unplugged_in_New_York
-spotify_url: https://open.spotify.com/album/1To7kv722A8SpZF789MZy7
 release_year: 1994
 ---
 

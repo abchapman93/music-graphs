@@ -2,7 +2,7 @@
 type: album
 name: "Sugar"
 canonical_link: https://en.wikipedia.org/wiki/Sugar_(Stanley_Turrentine_album)
-spotify_url: https://open.spotify.com/album/3hARuIUZqAIAKSuNvW5dGh
+spotify_url: https://open.spotify.com/album/4yXSeJYkh0gCmU9C8ss8NA
 release_year: 1970
 ---
 
