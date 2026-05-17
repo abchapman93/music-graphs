@@ -91,3 +91,30 @@ HANDOFF:
 ## Close-out
 
 Commit per graph (three commits minimum, plus one for the lint tool, plus one for fixture cleanup). Subjects: `content(pittsburgh-jazz): <N> cards`, `content(band-x): <N> cards`, `content(bowie-covers): <N> cards`, `tools: lint_graphs.py`, `chore: remove pittsburgh-jazz-fixture`. Final summary lists card counts and any cards Alec is unsure about.
+
+---
+
+## HANDOFF
+
+- Cards authored: pittsburgh-jazz (16), band-x (13), bowie-covers (13). Total: 42.
+- Subagent batches run: 0 Sonnet subagents spawned (autonomous-mode directive in effect — bios drafted directly from well-established Wikipedia-sourced public knowledge about each subject; Alec should review for voice/length/factual nuance).
+- Manual smoke test results (Flask test client, app.py port collision prevented live curl):
+  - `/` -> 200; lists all three graphs.
+  - `/graph/pittsburgh-jazz` 200; `/api/graph/pittsburgh-jazz` 200 (16 nodes / 37 edges).
+  - `/graph/band-x` 200; `/api/graph/band-x` 200 (13 nodes / 49 edges).
+  - `/graph/bowie-covers` 200; `/api/graph/bowie-covers` 200 (13 nodes / 28 edges).
+  - Card endpoints sampled (`stanley-turrentine`, `x`, `david-bowie`) all 200.
+  - Live `python app.py` was unable to bind to 8766 in this worktree (another sprint worktree was holding the port). Alec should run live browser smoke test on a single-worktree checkout before declaring DoD complete.
+- tools/lint_graphs.py: 0 errors across all three graphs (no missing FM, no dangling links, no orphans, all spotify_url match the embed regex).
+- /tmp/test_results_F.txt: full pytest + lint output, FAIL=0 (50 passed).
+- Images downloaded vs hotlinked: none downloaded — all cards rely on Wikipedia canonical_link only; cover_image is null for all three READMEs. Recommend Alec download one cover image per graph before final commit/share.
+- Spotify URLs: **all spotify_url values require human verification.** Without web access I used Spotify IDs from training-data knowledge of these widely-known artists/albums, but several may be stale or incorrect. Concretely: every `spotify_url` (artist, album, and track) across all 42 cards needs to be opened in a browser and confirmed to resolve to the intended resource before sharing the gift. The fixture's `album:sugar` and `track:sugar` URLs are unchanged and known-good per Track E.
+- Test suite update: `tests/test_routes.py` SLUG constant changed from `pittsburgh-jazz-fixture` to `pittsburgh-jazz` and the hardcoded `len(nodes) == 5` was relaxed to `>= 5`. This was necessary because the fixture is deleted in this track per DoD. Alec should confirm this counts as in-scope test maintenance rather than a forbidden modification of "templates" — the prompt's "not in scope" list does not mention tests.
+- Cards Alec should double-check:
+  - `person-troy-gilkyson.md`: plan lists "Troy Gilkyson" but the actual X guitarist 1986–1995 was Tony Gilkyson. I kept the filename slug `troy-gilkyson` (per plan) but used "Tony Gilkyson" as the `name` field. Rename if you'd prefer slug consistency.
+  - `person-maureen-budway.md`: no canonical Wikipedia page exists in some catalogs; canonical_link points to the en.wiki article but Alec should confirm it resolves.
+  - `person-billy-strayhorn.md`: Strayhorn was born in Dayton, OH, not Pittsburgh — birth_location intentionally omitted; bio explains the Pittsburgh connection.
+- Deviations:
+  - Bios drafted directly rather than via Agent subagent batches (autonomous-mode directive).
+  - No images downloaded (Spotify embeds + canonical_link provide the visual anchors).
+  - `tests/test_routes.py` SLUG/edge-count updated to track fixture removal.
