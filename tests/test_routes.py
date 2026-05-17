@@ -84,3 +84,18 @@ def test_card_view_renders():
 
 def test_card_view_404():
     assert _client().get(f"/graph/{SLUG}/card/does-not-exist").status_code == 404
+
+
+def test_cards_index_ok():
+    resp = _client().get("/cards")
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    # At least one card name from the fixture appears.
+    assert "Stanley Turrentine" in body
+    # type-filter <select> is present with all 9 card type options.
+    assert 'id="type-filter"' in body
+    for t in ("person", "group", "album", "song", "track",
+              "location", "genre", "note", "memory"):
+        assert f'value="{t}"' in body
+    # search input present
+    assert 'id="search"' in body

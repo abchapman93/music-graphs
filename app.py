@@ -122,10 +122,48 @@ def card_view(slug, card_slug):
     return render_template("card.html", slug=slug, card=payload)
 
 
+CARD_TYPES = (
+    "person", "group", "album", "song", "track",
+    "location", "genre", "note", "memory",
+)
+
+
 @app.route("/cards")
 def cards_index():
-    # Track G owns this.
-    return ("not implemented", 501)
+    """Flat index of every card across every graph.
+
+    Server walks `graphs/<slug>/cards/*.md` and emits a JSON list of card
+    entries that the template embeds for client-side filtering.
+    """
+    graphs = list_graphs(GRAPHS_ROOT)
+    cards: list[dict] = []
+    for g in graphs:
+        gslug = g["slug"]
+        cards_dir = _graph_dir(gslug) / "cards"
+        if not cards_dir.is_dir():
+            continue
+        for md_path in sorted(cards_dir.glob("*.md")):
+            try:
+                card = parse_card(md_path)
+            except ValueError:
+                continue
+            fm = card.get("frontmatter") or {}
+            image = fm.get("image") if isinstance(fm, dict) else None
+            cards.append({
+                "graph_slug": gslug,
+                "graph_name": g["name"],
+                "card_slug": card["slug"],
+                "type": card["type"],
+                "name": card["name"],
+                "image": image,
+                "url": f"/graph/{gslug}/card/{card['slug']}",
+            })
+    cards.sort(key=lambda c: (c["name"].lower(), c["graph_slug"]))
+    return render_template(
+        "cards.html",
+        cards=cards,
+        card_types=CARD_TYPES,
+    )
 
 
 if __name__ == "__main__":

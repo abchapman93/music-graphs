@@ -72,3 +72,14 @@ HANDOFF:
 ## Close-out
 
 Commit on `sprint/card-index` with subject `feat: /cards flat index + client-side filter & search`. One-paragraph summary.
+
+---
+
+HANDOFF:
+- /cards route lists 5 cards across 1 graph (pittsburgh-jazz-fixture; Track F not merged).
+- Type filter options: All + person, group, album, song, track, location, genre, note, memory (9 types).
+- Search behavior: case-insensitive substring on card name; debounced 100ms; toggles `data-hidden` attr (no re-render).
+- Link target convention chosen: `/graph/<graph_slug>/card/<card_slug>` (server-rendered deep-link page) — applied consistently.
+- Manual interaction check (via test_client): GET /cards → 200, includes "Stanley Turrentine", `id="search"`, `id="type-filter"` with all 9 type options. Type filter narrows by exact type; search substring-matches `data-name`; both combined AND.
+- /tmp/test_results_track-G.txt: /tmp/test_results_track-G.txt, FAIL=0 (51 passed).
+- Deviations: Updated stale stub assertion in tests/test_app.py (`test_cards_index_still_stubbed` → `test_cards_index_returns_200`) since Track G now owns the route.

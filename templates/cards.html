@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}all cards — music graphs{% endblock %}
+
+{% block content %}
+<section class="cards-index-header">
+  <h2>All cards</h2>
+  <p class="muted">{{ cards|length }} card{{ '' if cards|length == 1 else 's' }} across all graphs.</p>
+</section>
+
+<section class="cards-index-controls">
+  <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
+  <select id="type-filter">
+    <option value="all">All types</option>
+    {% for t in card_types %}
+    <option value="{{ t }}">{{ t }}</option>
+    {% endfor %}
+  </select>
+  <span id="result-count" class="muted"></span>
+</section>
+
+<ul id="card-list" class="cards-index-list">
+  {% for c in cards %}
+  <li class="cards-index-row" data-type="{{ c.type }}" data-name="{{ c.name|lower }}">
+    <span class="type-badge type-{{ c.type }}">{{ c.type }}</span>
+    <a class="card-name" href="{{ c.url }}">{{ c.name }}</a>
+    <span class="card-graph muted">in <a href="/graph/{{ c.graph_slug }}">{{ c.graph_name }}</a></span>
+  </li>
+  {% endfor %}
+</ul>
+
+<script id="cards-data" type="application/json">{{ cards|tojson }}</script>
+<script>
+(function () {
+  const search = document.getElementById("search");
+  const typeFilter = document.getElementById("type-filter");
+  const list = document.getElementById("card-list");
+  const countEl = document.getElementById("result-count");
+  const rows = Array.from(list.querySelectorAll(".cards-index-row"));
+
+  let timer = null;
+
+  function apply() {
+    const q = (search.value || "").trim().toLowerCase();
+    const t = typeFilter.value;
+    let shown = 0;
+    for (const row of rows) {
+      const name = row.dataset.name || "";
+      const type = row.dataset.type || "";
+      const typeOk = (t === "all") || (type === t);
+      const nameOk = !q || name.indexOf(q) !== -1;
+      const visible = typeOk && nameOk;
+      if (visible) {
+        row.removeAttribute("data-hidden");
+        shown++;
+      } else {
+        row.setAttribute("data-hidden", "true");
+      }
+    }
+    countEl.textContent = shown + " shown";
+  }
+
+  function debounced() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(apply, 100);
+  }
+
+  search.addEventListener("input", debounced);
+  typeFilter.addEventListener("change", apply);
+  apply();
+})();
+</script>
+{% endblock %}

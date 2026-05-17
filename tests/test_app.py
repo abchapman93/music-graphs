@@ -16,7 +16,7 @@ def test_home_returns_200():
     assert resp.status_code == 200
 
 
-def test_cards_index_still_stubbed():
-    # Track G owns this route. Track E must leave it 501.
+def test_cards_index_returns_200():
+    # Track G implements this; the page lists every card across graphs.
     client = app.test_client()
-    assert client.get("/cards").status_code == 501
+    assert client.get("/cards").status_code == 200
