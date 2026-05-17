@@ -41,3 +41,10 @@ HANDOFF:
 ## Close-out
 
 Brief one-paragraph summary of what was committed and the commit SHA. No `end_session` call needed (no task tracking for this pre-sprint setup).
+
+---
+
+HANDOFF:
+- Repo initialized at `/Users/alecchapman/Code/music-graphs/`, initial commit `d298183`.
+- .gitignore contents: Python cache (`__pycache__/`, `*.pyc`, `*.pyo`), venvs (`.venv/`, `venv/`), `.DS_Store`, `.pytest_cache/`, IDE dirs (`.idea/`, `.vscode/`) with `!.vscode/settings.json` exception, plus `*.egg-info/`, `dist/`, `build/`.
+- Any deviations: none.
