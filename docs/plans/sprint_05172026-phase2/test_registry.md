@@ -63,9 +63,9 @@ See `_phase-2.5-plan.md` for full track briefs.
 |---|---|---|---|
 | J1 | J | `triage-suggestion` skill reads one CSV row, presents to Alec, calls `add-node`/`add-edge` on approval | ⬜ |
 | J2 | J | `graphs/{slug}/inbox/` exists for all 3 graphs; `.gitkeep` + README explains drop-CSV-here flow | ⬜ |
-| K1 | K | Graph view fills viewport (graph canvas ≥80% width/height; side panel collapses/overlays) | ⬜ |
-| K2 | K | Physics frozen by default; "Unfreeze" toggle visible in graph controls | ⬜ |
-| K3 | K | Zoom + / − buttons present and functional in graph view corner | ⬜ |
+| K1 | K | Graph view fills viewport (full-bleed `graph-shell`; ~78% canvas, side panel `clamp(280px, 22vw, 380px)`) | ✅ (merge 6fe0ed2) |
+| K2 | K | Physics freeze on stabilization; "Frozen" checkbox toggle in `.graph-controls` | ✅ (merge 6fe0ed2) |
+| K3 | K | `+` / `−` / `⤢` (fit) buttons in top-right of canvas; scroll-zoom preserved | ✅ (merge 6fe0ed2) |
 | L1 | L | `retrieve-wikipedia-category` skill: given a Category URL, returns member pages (title + URL) | ⬜ |
 | L2 | L | `expand-graph` reads `seed_sources:` from graph root card and uses Wikipedia categories as candidate source | ⬜ |
 | L3 | L | bowie-covers and pittsburgh-jazz root cards updated with `seed_sources:` Wikipedia category URLs | ⬜ |
@@ -78,7 +78,7 @@ See `_phase-2.5-plan.md` for full track briefs.
 |---|---|---|
 | M11 | Google Form created and published; link saved in `docs/family-collaboration.md` | ⬜ |
 | M12 | End-to-end: drop a sample CSV in `graphs/bowie-covers/inbox/`, run `triage-suggestion`, see candidate, approve, verify card written | ⬜ |
-| M13 | Graph view UX feels good to Alec: large canvas, frozen-by-default, zoom buttons work as expected | ⬜ |
+| M13 | Graph view UX feels good to Alec: large canvas, frozen-by-default, zoom buttons work as expected | ✅ (2026-05-17 — Alec confirmed "really good" after live UI eyeball) |
 | M14 | `expand-graph` with Wikipedia seeds surfaces sensible candidates Alec hasn't already added | ⬜ |
 
 ---
