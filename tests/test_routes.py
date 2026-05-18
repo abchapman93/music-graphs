@@ -30,6 +30,12 @@ def test_graph_view_renders():
     assert 'id="graph"' in body
     assert "vis-network" in body
     assert f'GRAPH_SLUG = "{SLUG}"' in body
+    # K1/K2/K3 — full-bleed graph page with zoom + freeze controls.
+    assert 'class="graph-page"' in body
+    assert 'id="zoom-in"' in body
+    assert 'id="zoom-out"' in body
+    assert 'id="zoom-fit"' in body
+    assert 'id="freeze-toggle"' in body
 
 
 def test_graph_view_unknown_404():

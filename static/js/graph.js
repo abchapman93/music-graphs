@@ -22,6 +22,8 @@
     memory:   { shape: "star",     color: { background: "#ef4444", border: "#991b1b" } },
   };
 
+  const ZOOM_STEP = 1.25;
+
   let network = null;
 
   function escapeText(s) {
@@ -90,6 +92,34 @@
     } catch (_) {}
   }
 
+  function zoomBy(factor) {
+    if (!network) return;
+    const cur = network.getScale();
+    network.moveTo({ scale: cur * factor, animation: { duration: 150 } });
+  }
+
+  function fitView() {
+    if (!network) return;
+    network.fit({ animation: { duration: 200 } });
+  }
+
+  function wireControls() {
+    const zin = document.getElementById("zoom-in");
+    const zout = document.getElementById("zoom-out");
+    const zfit = document.getElementById("zoom-fit");
+    const freeze = document.getElementById("freeze-toggle");
+    if (zin) zin.addEventListener("click", () => zoomBy(ZOOM_STEP));
+    if (zout) zout.addEventListener("click", () => zoomBy(1 / ZOOM_STEP));
+    if (zfit) zfit.addEventListener("click", fitView);
+    if (freeze) {
+      freeze.addEventListener("change", () => {
+        if (!network) return;
+        // checkbox checked == "Frozen" (physics disabled)
+        network.setOptions({ physics: { enabled: !freeze.checked } });
+      });
+    }
+  }
+
   // Delegate wikilink clicks inside the panel.
   panel.addEventListener("click", function (ev) {
     const a = ev.target.closest("[data-wikilink]");
@@ -100,6 +130,8 @@
     focusNode(targetId);
     loadCard(targetId);
   });
+
+  wireControls();
 
   fetch(`/api/graph/${encodeURIComponent(SLUG)}`)
     .then(r => {
@@ -117,6 +149,7 @@
           nodes: { font: { size: 13, color: "#1a1a1a" }, size: 16 },
           edges: { color: { color: "#9ca3af" }, smooth: { type: "dynamic" } },
           physics: {
+            enabled: true,  // run once to lay out, then freeze after stabilization
             solver: "forceAtlas2Based",
             forceAtlas2Based: { gravitationalConstant: -50, springLength: 120, avoidOverlap: 0.5 },
             stabilization: { iterations: 200 },
@@ -130,10 +163,17 @@
         loadCard(id);
       });
 
-      // Initial load: focus + load the first node so the panel is never empty.
+      // Freeze physics once initial layout is stable. The toggle starts checked
+      // (Frozen); the user clicks it to release physics.
+      network.once("stabilizationIterationsDone", () => {
+        network.setOptions({ physics: { enabled: false } });
+        const first = (data.nodes || [])[0];
+        if (first) focusNode(first.id);
+      });
+
+      // Initial card load so the panel is never empty.
       const first = (data.nodes || [])[0];
       if (first) {
-        network.once("stabilizationIterationsDone", () => focusNode(first.id));
         loadCard(first.id);
       } else {
         panel.innerHTML = '<p class="muted">This graph has no cards yet.</p>';

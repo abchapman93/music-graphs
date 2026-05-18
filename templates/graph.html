@@ -1,19 +1,32 @@
 {% extends "base.html" %}
 
 {% block title %}{{ name }} — music graphs{% endblock %}
+{% block body_class %}graph-page{% endblock %}
 
 {% block content %}
-<section class="graph-header">
-  <h2>{{ name }}</h2>
-  {% if description %}<p class="muted">{{ description }}</p>{% endif %}
+<section class="graph-shell">
+  <header class="graph-shell-header">
+    <h2>{{ name }}</h2>
+    {% if description %}<p class="muted">{{ description }}</p>{% endif %}
+  </header>
+  <div class="graph-stage">
+    <div class="graph-canvas-wrap">
+      <div id="graph"></div>
+      <div class="graph-controls" role="toolbar" aria-label="Graph controls">
+        <button id="zoom-in" type="button" class="gc-btn" aria-label="Zoom in" title="Zoom in">+</button>
+        <button id="zoom-out" type="button" class="gc-btn" aria-label="Zoom out" title="Zoom out">−</button>
+        <button id="zoom-fit" type="button" class="gc-btn" aria-label="Fit to screen" title="Fit to screen">⤢</button>
+        <label class="gc-toggle" title="Pause physics simulation">
+          <input type="checkbox" id="freeze-toggle" checked>
+          <span>Frozen</span>
+        </label>
+      </div>
+    </div>
+    <aside id="card-panel" aria-label="Card details">
+      <p class="muted">Click a node to see details.</p>
+    </aside>
+  </div>
 </section>
-
-<div class="layout-graph">
-  <div id="graph"></div>
-  <aside id="card-panel">
-    <p class="muted">Loading…</p>
-  </aside>
-</div>
 
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <script>
