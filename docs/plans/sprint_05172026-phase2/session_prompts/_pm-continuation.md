@@ -1,8 +1,8 @@
-# Sprint Manager Handoff — 2026-05-17 (end of session)
+# Sprint Manager Handoff — 2026-05-18 (end of session)
 
-**Written:** 2026-05-17
+**Written:** 2026-05-18
 **Sprint folder:** `/Users/alecchapman/Code/music-graphs/docs/plans/sprint_05172026-phase2/`
-**Main branch HEAD:** `a4da7d1 pm: Track H merged + Z1/Z2 signed; registry updated`
+**Main branch HEAD:** `f08157e pm: Track K merged (graph view UI); K1/K2/K3 + M13 signed`
 **Demo target:** 2026-06-07
 **Task tracking:** None — `music-graphs` is not registered in task_lib. Sprint tracked via this folder + `test_registry.md`.
 
@@ -10,102 +10,126 @@
 
 ## Current state
 
-**All 9 tracks merged. All automated registry rows ✅.** The sprint is functionally complete on the automated side: 100 pytest pass, lint clean across all 3 graphs, bowie-covers expanded from 3 to 10 cover artists. The only remaining items before sprint closeout are:
+**Phase 2.5 planned and one of three tracks shipped.** Phase 2 closed last session with all automated tracks merged. This session: collected Alec's pre-family-share feature requests, dropped Claude-Code-based collaboration (M1/M2/M10), planned Phase 2.5 (tracks J/K/L/M), and shipped Track K (graph view UI).
 
-1. **Alec's additional feature requests** — Alec said after completing Track H he'd spec new features needed before sharing with family collaborators. He has not described these yet; the next session should collect them first.
-2. **Manual M1–M10** — Alec must sign off on the family-agent UX and UI spot-checks.
-3. **Sprint closeout** — write `_sprint-closeout.md` following the Phase 1 pattern.
-
-| Track | Status | Merge SHA |
+| Phase / Track | Status | Notes |
 |---|---|---|
-| Pre (Tony Gilkyson rename) | ✅ | `6b76576` |
-| A `retrieve-spotify-song` | ✅ | `c3cccb1` |
-| B `add-node` | ✅ | `6f6195c` |
-| C `add-edge` | ✅ | `7999062` |
-| D `expand-graph` | ✅ | `11a5d45` |
-| E family-agent + setup docs | ✅ | `8a9cfa8` |
-| F band-x dogfood (5 albums) | ✅ | `735e88a` |
-| G pittsburgh-jazz dogfood (12 albums + notes) | ✅ | `6c9c8dd` |
-| I cover images (M12) | ✅ | `b44a25f` |
-| H bowie-covers expansion (7 covers + Nirvana URL) | ✅ | `e1220ee` |
+| Phase 1 | ✅ | tagged v0.1 (prior sprint) |
+| Phase 2 automated (Pre, A–I, H) | ✅ | all merged; H closed 2026-05-17 |
+| **Phase 2.5 Track K — graph view UI** | ✅ | merged `6fe0ed2`; K1/K2/K3 + M13 signed |
+| Phase 2.5 Track J — suggestion intake | ⬜ | session prompt ready |
+| Phase 2.5 Track L — Wikipedia seeds | ⬜ | session prompt ready |
+| Phase 2.5 Track M — closeout | ⏳ | blocked on J + L |
 
-Graph counts after Track H:
-- band-x: 18n/55e (unchanged from Track F)
-- pittsburgh-jazz: 28n/52e (unchanged from Track G)
-- bowie-covers: 13 cards → 36 cards (23 new: 10 cover artists, 7 albums/singles, 6 songs; Nirvana URL resolved)
-
-Automated registry: **all rows ✅** (H1, H2, Z1, Z2 signed off this session).
-Manual registry: **M1–M10 all ⬜** — none yet attempted.
+Graph counts unchanged from end-of-Track-H (band-x 18n/55e, pittsburgh-jazz 28n/52e, bowie-covers 36 cards). 100 pytest pass, lint clean.
 
 ---
 
 ## What happened this session
 
-1. **Resumed sprint manager** from prior `_pm-continuation.md`. Verified worktree `/private/tmp/mg-wt-H` intact on `sprint/bowie-covers-expansion`.
-2. **Generated expand-graph candidates** for bowie-covers via Spotify MCP: 5 PM-proposed (Mott the Hoople, Philip Glass, Peter Gabriel, Bauhaus, Cat Power). Alec approved all 5 and added 2 more via Spotify URLs: "Kooks" by Orrin Evans/Rosenwinkel/Eubanks and "Absolute Beginners" by Carla Bruni. Alec also provided the Nirvana MTV Unplugged album URL that had been unresolvable in prior sessions.
-3. **Verified all candidates** via Spotify MCP (artist IDs) and WebFetch (track/album identification). Compiled full list of 7 new cover entries with verified Spotify URLs.
-4. **Wrote `/tmp/track-h-driver.py`** — one-shot Python driver calling `write_card` (run_lint=False) for all 23 new cards: 6 songs, 2 groups, 7 persons, 7 albums/singles, plus Nirvana frontmatter update.
-5. **Ran driver** in the worktree. Lint caught one slug collision (album "All the Young Dudes" disambiguated to `all-the-young-dudes-album` because the song took `all-the-young-dudes`). Fixed two wikilinks via Python inline. Lint clean.
-6. **100 pytest pass.** Committed `e1220ee`, rebased onto main, ff-merged, worktree torn down.
-7. **Signed off H1, H2, Z1, Z2** in `test_registry.md`. Committed `a4da7d1`.
-8. **Did not collect Alec's additional feature requests** — he said he'd give them after Track H was done; session ended before he described them.
+1. **Re-oriented as sprint manager** from `_pm-continuation.md` dated 2026-05-17 (Track H closeout). Verified main at `a4da7d1`.
+2. **Collected Phase 2.5 feature requests** from Alec:
+   - **Goal 1 (scope cut):** family will NOT use Claude Code. Suggestions arrive via Google Form; UI work may happen via a Claude Design project. "Embarrassing if they see it" bar is satisfied by current state.
+   - **Goal 2 (UI):** graph view needs big canvas (like wiki-update skill's wiki UI), physics frozen by default, zoom buttons.
+   - **Goal 3 (seeds):** Wikipedia Category pages are the primary new resource type for candidate discovery (`Category:Songs_written_by_David_Bowie`, `Category:Jazz_musicians_from_Pittsburgh`).
+3. **Wrote Phase 2.5 plan** at `_phase-2.5-plan.md` + session prompts `J-suggestion-intake.md`, `K-graph-view-ui.md`, `L-wikipedia-seeds.md`. Updated `test_registry.md`: marked M1/M2/M10 ⛔ DROPPED; added J1/J2/K1–3/L1–3/Z3/Z4 automated rows and M11–M14 manual rows. Committed `51ee9af`.
+4. **Track K driver decision:** Alec said "I drive in a worktree here" (not Claude Design). Intake storage: per-graph `inbox/` (decision baked into J spec).
+5. **Track K implementation** in worktree `mg-K-graph-view`:
+   - `templates/base.html`: added `{% block body_class %}` so graph view can opt into full-bleed layout.
+   - `templates/graph.html`: replaced `.layout-graph` two-column with `.graph-shell > .graph-stage > .graph-canvas-wrap` + side panel.
+   - `static/css/style.css`: full-bleed override for `body.graph-page main.container`; grid `minmax(0, 1fr) clamp(280px, 22vw, 380px)`; controls top-right of canvas; explicit `height: calc(100vh - 53px)` on `.graph-shell` (fix for vis-network zero-height-init bug).
+   - `static/js/graph.js`: physics freeze on `stabilizationIterationsDone`; "Frozen" checkbox toggle; zoom in/out/fit handlers using `network.moveTo({ scale })` and `network.fit()`.
+   - `tests/test_routes.py`: added DOM assertions for `graph-page`, `zoom-in`, `zoom-out`, `zoom-fit`, `freeze-toggle`.
+6. **Pre-merge friction (worth noting):** Initial Edit calls used absolute paths to `/Users/alecchapman/Code/music-graphs/...` instead of the worktree path. Caught by smoke-check returning old HTML. Fixed by copying files from main → worktree and `git checkout`-ing main. **Lesson for next worktree session: in a worktree, use relative paths or verify `pwd` before editing.**
+7. **Live UI eyeball:** Killed a stale Flask server (PID 10436 from main repo) that was bound to port 8766 and serving the old templates. Restarted from the worktree. After hard-refresh Alec confirmed UI: "really good. I feel satisfied with the UI changes."
+8. **Merge + sign-off:** Committed `6fe0ed2`, ff-merged to main, removed worktree. Updated `test_registry.md` (K1/K2/K3 + M13 ✅), committed `f08157e`.
 
 ---
 
 ## Immediate next steps (in order)
 
-### Step 1 — Collect Alec's additional feature requests
+### Step 1 — Track L (Wikipedia seeds) — recommended next
 
-Alec said at the start of this session: *"Let's finish the Bowie extract and then add a few additional features to the MVP that is needed before sharing with family collaborators. I'll give more details about the new requests after completing the bowie extract."*
+**Why first:** Lightest blocker, pure additive, no UI risk. Result is immediately useful for `expand-graph` and for Track J's eventual triage flow.
 
-Track H is now complete. Ask Alec: **"What are the additional features you want before sharing with Clare and Jeremiah?"** Then plan them as new tracks or inline changes depending on scope.
+**Session prompt:** `docs/plans/sprint_05172026-phase2/session_prompts/L-wikipedia-seeds.md`
 
-### Step 2 — Manual M1–M10 verification (Alec)
+**Worktree:** `mg-L-wikipedia-seeds` on a fresh branch from main.
 
-After any additional features are implemented, surface the manual checklist to Alec and ask when he wants to run through it. The M-rows are in `docs/plans/sprint_05172026-phase2/test_registry.md` lines 40–52. Key ones:
+**Deliverables (full detail in session prompt):**
+- New skill `skills/retrieve-wikipedia-category/` (mirror `retrieve-spotify-song/` structure)
+- `expand-graph` enhancement: reads `seed_sources:` from graph root card, augments Spotify-MCP candidates with Wikipedia-sourced ones, dedupes against existing slugs
+- Update root cards: bowie-covers (`Category:Songs_written_by_David_Bowie`), pittsburgh-jazz (`Category:Jazz_musicians_from_Pittsburgh`); skip band-x unless Alec provides a category
+- Document the seed-source pattern
 
-- **M1** — Local Claude Code: family agent adds one node + one edge without seeing YAML
-- **M2** — claude.ai/code: same on cloud surface
-- **M3** — Cover images render on `/` for all 3 graphs (no broken images)
-- **M4** — All 3 graph views load with correct node/edge counts
-- **M8** — bowie-covers additions are accurate (no hallucinated covers)
-- **M9** — `expand-graph` workflow feels right to Alec
-- **M10** — Setup docs (Clare/Jeremiah) make sense to a non-technical reader
+**Acceptance gates:** L1, L2, L3 automated + M14 manual.
 
-### Step 3 — Sprint closeout
+### Step 2 — Track J (Google Form suggestion intake)
 
-Once all M-rows are signed, write `docs/plans/sprint_05172026-phase2/_sprint-closeout.md` following the Phase 1 template at `docs/plans/sprint_05172026/_sprint-closeout.md`. Capture:
-- Phase 2 delivered scope
-- Skill-friction notes from F, G, H HANDOFFs (esp. `write_card.py` `repo_root` bug, missing free-text-body-addendum, Spotify licensor errors)
-- Phase 3 wishlist (cloud hosting? new graphs? `add-note` skill?)
+**Session prompt:** `docs/plans/sprint_05172026-phase2/session_prompts/J-suggestion-intake.md`
 
-Then tag: `git tag v0.2-phase2-demo`.
+**Worktree:** `mg-J-suggestion-intake`.
+
+**Deliverables (full detail in session prompt):**
+- `graphs/{band-x,bowie-covers,pittsburgh-jazz}/inbox/` folders with `.gitkeep` + README
+- New skill `skills/triage-suggestion/` (one-row-at-a-time CSV review → `add-node`/`add-edge` reuse; processed/rejected rotation)
+- `docs/family-collaboration.md` documenting the form → CSV → triage flow (Alec to fill in actual Google Form URL after publishing)
+- Fix `write_card.py` `repo_root` inference bug while in this track (it will trip on `triage-suggestion`)
+
+**Acceptance gates:** J1, J2 automated + M11, M12 manual.
+
+### Step 3 — Track M (sprint closeout)
+
+**Blocked on:** Tracks J and L merged AND manual M3, M4, M5, M6, M7, M8, M9, M11, M12, M14 signed by Alec.
+
+**Deliverables:**
+- Sign Z3, Z4 (final pytest + lint after Phase 2.5 merges)
+- `_sprint-closeout.md` covering both Phase 2 and Phase 2.5 (template: `docs/plans/sprint_05172026/_sprint-closeout.md`)
+- `git tag v0.2-phase2-demo`
 
 ---
 
 ## Key decisions (do not re-litigate)
 
-- **All 7 cover entries are approved.** Alec confirmed all 5 PM-proposed candidates and added 2 of his own. No further approval needed for bowie-covers content.
-- **Bauhaus exception:** "Ziggy Stardust" is a single with no album home. Using track URL as `spotify_url` is the accepted workaround (same as Carla Bruni "Absolute Beginners" and the Orrin Evans `#knowingishalfthebattle` album which is MCP-restricted). The single is represented as `type: album` with the track URL.
-- **`all-the-young-dudes-album` slug**: The Mott the Hoople album was disambiguated because the song card `song-all-the-young-dudes` claimed the slug first. All internal wikilinks use `[[album:all-the-young-dudes-album]]`. This is final — don't rename.
-- **Alec's new feature requests are unknown** — don't guess or pre-implement anything. Collect them in the next session first.
+- **M1, M2, M10 are dropped, not deferred.** Family won't use Claude Code. The collaboration model is Google Form → CSV → `triage-suggestion`. Don't re-add Claude-Code-onboarding scope.
+- **Track K side-panel width:** kept right-side panel at `clamp(280px, 22vw, 380px)`. Alec explicitly rejected the slide-out drawer mid-implementation in favor of always-visible side panel with a wider graph share. Don't revisit.
+- **K controls position:** top-right corner of canvas (Alec said "prefer the zoom tools to be placed at the top of the graph view instead of the bottom"). Don't move to bottom.
+- **`.graph-shell` explicit height (`calc(100vh - 53px)`)** is intentional — vis-network needs a non-zero canvas at init. Don't remove in favor of pure flex sizing without testing.
+- **Intake storage is per-graph (`graphs/{slug}/inbox/`)**, not top-level. The Google Form must ask which graph the suggestion is for.
+- **Track L uses Wikipedia API** (`?action=query&list=categorymembers&...`), not HTML scraping. Same fail-loud contract as `retrieve-spotify-song`.
 
 ---
 
 ## Blocking questions
 
-- **What additional features does Alec want before family sharing?** (Step 1 above — must ask before doing anything else)
+- **band-x Wikipedia seed:** No obvious Category URL for the band X (1980s LA punk). Track L's L3 row says "skip band-x unless Alec provides one." Either Alec hands over a URL during the L session, or band-x stays without `seed_sources:` and L3 is signed as "n/a for band-x."
 
 ---
 
-## Skill-bug backlog (unchanged from prior session)
+## Files written this session
 
-These are real bugs surfaced during dogfood. None block the current sprint. Fix before Phase 3 or before non-Alec users run the family agent:
+| File | Action |
+|---|---|
+| `docs/plans/sprint_05172026-phase2/_phase-2.5-plan.md` | created |
+| `docs/plans/sprint_05172026-phase2/session_prompts/J-suggestion-intake.md` | created |
+| `docs/plans/sprint_05172026-phase2/session_prompts/K-graph-view-ui.md` | created |
+| `docs/plans/sprint_05172026-phase2/session_prompts/L-wikipedia-seeds.md` | created |
+| `docs/plans/sprint_05172026-phase2/test_registry.md` | updated (M1/M2/M10 dropped; J/K/L/Z3/Z4/M11–M14 added; K1/K2/K3/M13 signed) |
+| `templates/base.html` | updated (`{% block body_class %}`) |
+| `templates/graph.html` | rewritten (graph-shell layout) |
+| `static/css/style.css` | updated (full-bleed + controls + drawer-less side panel) |
+| `static/js/graph.js` | updated (freeze + zoom controls; freeze on stabilization) |
+| `tests/test_routes.py` | updated (DOM assertions for new controls) |
+| `docs/plans/sprint_05172026-phase2/session_prompts/_pm-continuation.md` | **this file — overwritten** |
 
-1. **`write_card.py` `repo_root` inference wrong** — `parents[3]` resolves to `.claude/` in a worktree. Workaround: always pass `repo_root=` explicitly.
-2. **No "add free-text body addendum" operation** — personal notes on person cards required direct Edit tool calls.
-3. **Spotify `ALL_CONTENT_LICENSOR_RESTRICTED` errors** — family agent should explain in plain English.
-4. **`add-edge` relationship verb** — caller must choose "recorded" vs "appears on" etc. per-call. A small taxonomy would help the family agent.
+---
+
+## Skill-bug backlog (carry-forward — unchanged from Phase 2)
+
+1. **`write_card.py` `repo_root` inference wrong in worktrees** — fix during Track J.
+2. **No "add free-text body addendum" op** — consider splitting `add-memory` / `append-body` helper out of Track J if cleanest.
+3. **Spotify `ALL_CONTENT_LICENSOR_RESTRICTED` user-facing message** — minor copy fix, do during L if touching candidate review.
+4. **`add-edge` relationship verb taxonomy** — defer to Phase 3.
 
 ---
 
@@ -113,8 +137,10 @@ These are real bugs surfaced during dogfood. None block the current sprint. Fix 
 
 | File | Role |
 |---|---|
-| `docs/plans/sprint_05172026-phase2/test_registry.md` | Pass/fail gate — all automated rows ✅, M1–M10 outstanding |
+| `docs/plans/sprint_05172026-phase2/_phase-2.5-plan.md` | Full Phase 2.5 track briefs |
+| `docs/plans/sprint_05172026-phase2/test_registry.md` | Pass/fail gate — K row signed; J/L/M outstanding |
+| `docs/plans/sprint_05172026-phase2/session_prompts/L-wikipedia-seeds.md` | Next-track launch prompt |
+| `docs/plans/sprint_05172026-phase2/session_prompts/J-suggestion-intake.md` | Following-track launch prompt |
 | `docs/plans/sprint_05172026-phase2/session_prompts/_pm-continuation.md` | This file — re-entry point for next PM session |
-| `docs/plans/sprint_05172026/_sprint-closeout.md` | Phase 1 closeout — template for Phase 2 closeout |
-| `graphs/bowie-covers/cards/` | 36 cards total after Track H |
+| `templates/graph.html`, `static/css/style.css`, `static/js/graph.js` | Phase 2.5 K deliverables — reference for any future graph view work |
 | `tools/lint_graphs.py` | Always green — run before any commit |
