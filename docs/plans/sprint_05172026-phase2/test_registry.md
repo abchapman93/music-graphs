@@ -40,8 +40,8 @@
 
 | # | Check | Status |
 |---|---|---|
-| M1 | Family-agent end-to-end on local Claude Code: add one new node + one new edge to any graph without ever seeing YAML or being asked to write markdown | ⬜ |
-| M2 | Family-agent end-to-end on claude.ai/code (cloud): same as M1 in the cloud surface | ⬜ |
+| M1 | ~~Family-agent end-to-end on local Claude Code~~ | ⛔ DROPPED (Phase 2.5 scope cut — family won't use Claude Code; Google Form intake instead) |
+| M2 | ~~Family-agent end-to-end on claude.ai/code (cloud)~~ | ⛔ DROPPED (same reason as M1) |
 | M3 | Cover images render correctly on `/` for all 3 graphs (no broken images, sensible crop) | ⬜ |
 | M4 | All 3 graph views still load (`/graph/band-x`, `/graph/bowie-covers`, `/graph/pittsburgh-jazz`) with correct node/edge counts | ⬜ |
 | M5 | Click a new band-x solo-album card — Spotify embed plays | ⬜ |
@@ -49,7 +49,37 @@
 | M7 | Sean Jones card and Maureen Budway album card both surface Alec's personal Duquesne notes | ⬜ |
 | M8 | New bowie-covers additions are accurate (no hallucinated covers; each has Wikipedia or Spotify backing) | ⬜ |
 | M9 | `expand-graph` skill workflow feels right: candidate list is sensible, approve/reject UX is clear | ⬜ |
-| M10 | Setup docs for Clare/Jeremiah make sense — Alec can follow them as if he were a non-technical user | ⬜ |
+| M10 | ~~Setup docs for Clare/Jeremiah~~ | ⛔ DROPPED (Phase 2.5 scope cut — no Claude Code onboarding needed) |
+
+---
+
+## Phase 2.5 — Pre-family-share polish (added 2026-05-17)
+
+See `_phase-2.5-plan.md` for full track briefs.
+
+### Automated (PM signs off)
+
+| # | Track | Check | Status |
+|---|---|---|---|
+| J1 | J | `triage-suggestion` skill reads one CSV row, presents to Alec, calls `add-node`/`add-edge` on approval | ⬜ |
+| J2 | J | `graphs/{slug}/inbox/` exists for all 3 graphs; `.gitkeep` + README explains drop-CSV-here flow | ⬜ |
+| K1 | K | Graph view fills viewport (graph canvas ≥80% width/height; side panel collapses/overlays) | ⬜ |
+| K2 | K | Physics frozen by default; "Unfreeze" toggle visible in graph controls | ⬜ |
+| K3 | K | Zoom + / − buttons present and functional in graph view corner | ⬜ |
+| L1 | L | `retrieve-wikipedia-category` skill: given a Category URL, returns member pages (title + URL) | ⬜ |
+| L2 | L | `expand-graph` reads `seed_sources:` from graph root card and uses Wikipedia categories as candidate source | ⬜ |
+| L3 | L | bowie-covers and pittsburgh-jazz root cards updated with `seed_sources:` Wikipedia category URLs | ⬜ |
+| Z3 | all | Phase 1+2 pytest still passes after Phase 2.5 merges | ⬜ |
+| Z4 | all | `lint_graphs.py` reports 0 errors across all 3 graphs after Phase 2.5 merges | ⬜ |
+
+### Manual (Alec signs off)
+
+| # | Check | Status |
+|---|---|---|
+| M11 | Google Form created and published; link saved in `docs/family-collaboration.md` | ⬜ |
+| M12 | End-to-end: drop a sample CSV in `graphs/bowie-covers/inbox/`, run `triage-suggestion`, see candidate, approve, verify card written | ⬜ |
+| M13 | Graph view UX feels good to Alec: large canvas, frozen-by-default, zoom buttons work as expected | ⬜ |
+| M14 | `expand-graph` with Wikipedia seeds surfaces sensible candidates Alec hasn't already added | ⬜ |
 
 ---
 
