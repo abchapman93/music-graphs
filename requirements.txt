@@ -2,3 +2,4 @@ Flask
 Markdown
 PyYAML
 python-frontmatter
+gunicorn
