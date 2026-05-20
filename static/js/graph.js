@@ -384,6 +384,130 @@
     if (idx >= 0) setActiveDirectoryRow(targetId.slice(idx + 1));
   });
 
+  // ── Panel state: resize, collapse, persistence ─────────────────────────
+  const PANEL_STATE_KEY = "mg-panel-state";
+  const PANEL_MIN = 200;
+  const PANEL_MAX = 480;
+  const PANEL_DEFAULTS = { leftWidth: 240, rightWidth: 320, leftCollapsed: false, rightCollapsed: false };
+  const stage = document.getElementById("graph-stage");
+
+  function loadPanelState() {
+    try {
+      const raw = localStorage.getItem(PANEL_STATE_KEY);
+      if (!raw) return Object.assign({}, PANEL_DEFAULTS);
+      const parsed = JSON.parse(raw);
+      return Object.assign({}, PANEL_DEFAULTS, parsed);
+    } catch (_) {
+      return Object.assign({}, PANEL_DEFAULTS);
+    }
+  }
+
+  function savePanelState(s) {
+    try { localStorage.setItem(PANEL_STATE_KEY, JSON.stringify(s)); } catch (_) {}
+  }
+
+  function clampWidth(w) {
+    if (!Number.isFinite(w)) return PANEL_DEFAULTS.leftWidth;
+    return Math.max(PANEL_MIN, Math.min(PANEL_MAX, Math.round(w)));
+  }
+
+  const panelState = loadPanelState();
+  panelState.leftWidth = clampWidth(panelState.leftWidth);
+  panelState.rightWidth = clampWidth(panelState.rightWidth);
+
+  function applyPanelState() {
+    if (!stage) return;
+    stage.style.setProperty("--left-w", panelState.leftWidth + "px");
+    stage.style.setProperty("--right-w", panelState.rightWidth + "px");
+    stage.classList.toggle("left-collapsed", !!panelState.leftCollapsed);
+    stage.classList.toggle("right-collapsed", !!panelState.rightCollapsed);
+  }
+
+  function redrawNetwork() {
+    if (!network) return;
+    try { network.redraw(); } catch (_) {}
+  }
+
+  function toggleCollapse(side) {
+    if (side === "left") panelState.leftCollapsed = !panelState.leftCollapsed;
+    else if (side === "right") panelState.rightCollapsed = !panelState.rightCollapsed;
+    applyPanelState();
+    savePanelState(panelState);
+    // Wait for grid transition before redrawing vis-network.
+    setTimeout(redrawNetwork, 200);
+  }
+
+  function wirePanelButtons() {
+    if (!stage) return;
+    stage.querySelectorAll("[data-collapse]").forEach(btn => {
+      btn.addEventListener("click", ev => {
+        ev.stopPropagation();
+        toggleCollapse(btn.getAttribute("data-collapse"));
+      });
+    });
+    stage.querySelectorAll("[data-expand]").forEach(btn => {
+      btn.addEventListener("click", ev => {
+        ev.stopPropagation();
+        toggleCollapse(btn.getAttribute("data-expand"));
+      });
+    });
+  }
+
+  function wirePanelResize() {
+    if (!stage) return;
+    stage.querySelectorAll("[data-resize]").forEach(handle => {
+      handle.addEventListener("mousedown", ev => {
+        ev.preventDefault();
+        const side = handle.getAttribute("data-resize");
+        const startX = ev.clientX;
+        const startW = side === "left" ? panelState.leftWidth : panelState.rightWidth;
+        handle.classList.add("dragging");
+        document.body.classList.add("panel-resizing");
+
+        function onMove(e) {
+          const dx = e.clientX - startX;
+          const raw = side === "left" ? startW + dx : startW - dx;
+          const w = clampWidth(raw);
+          if (side === "left") {
+            panelState.leftWidth = w;
+            stage.style.setProperty("--left-w", w + "px");
+          } else {
+            panelState.rightWidth = w;
+            stage.style.setProperty("--right-w", w + "px");
+          }
+        }
+        function onUp() {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+          handle.classList.remove("dragging");
+          document.body.classList.remove("panel-resizing");
+          savePanelState(panelState);
+          redrawNetwork();
+        }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+    });
+  }
+
+  // ESC: re-expand the right panel back to user's saved width (not hard-coded).
+  document.addEventListener("keydown", ev => {
+    if (ev.key !== "Escape") return;
+    // Don't fight the search input's local ESC (it clears search & blurs).
+    if (document.activeElement === searchInput) return;
+    if (panelState.rightCollapsed) {
+      panelState.rightCollapsed = false;
+      applyPanelState();
+      savePanelState(panelState);
+      setTimeout(redrawNetwork, 200);
+    }
+  });
+
+  // Apply restored state BEFORE first network render (called below).
+  applyPanelState();
+  wirePanelButtons();
+  wirePanelResize();
+
   wireControls();
   wireSearch();
   wireDirectory();
