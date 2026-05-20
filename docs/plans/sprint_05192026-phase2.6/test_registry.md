@@ -34,8 +34,8 @@
 | M-O | O | Directory panel is readable and useful for browsing | Spot-check grouping order; row density; type color dots | ✅ Alec signed 2026-05-19 |
 | M-P | P | Panel collapse/resize feels smooth; canvas doesn't lose state | Drag, collapse, reload — no jank | ✅ Alec signed 2026-05-19 |
 | M-Q | Q | Editing a real card and saving works end-to-end | Pick one factual error, fix it via the UI, confirm on disk + in app | ✅ Alec signed 2026-05-20 |
-| M-R | R | Creating a note from the UI works end-to-end | Pick a node, add a personal note, confirm new card + edge | ⬜ |
-| M-Z | All | Demo-ready: all four UX features feel coherent and ship-ready for family share | Final eyeball before tagging v0.2.6 | ⬜ |
+| M-R | R | Creating a note from the UI works end-to-end | Pick a node, add a personal note, confirm new card + edge | ✅ Alec signed 2026-05-20 |
+| M-Z | All | Demo-ready: all four UX features feel coherent and ship-ready for family share | Final eyeball before tagging v0.2.6 | ✅ Alec signed 2026-05-20 |
 
 ---
 
