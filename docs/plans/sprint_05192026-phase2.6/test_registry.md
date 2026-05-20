@@ -30,8 +30,8 @@
 
 | # | Track | Check | Notes | Status |
 |---|---|---|---|---|
-| M-N | N | Search feels fast and finds the right node on all three graphs | Try band-x, bowie-covers, pittsburgh-jazz | ⬜ |
-| M-O | O | Directory panel is readable and useful for browsing | Spot-check grouping order; row density; type color dots | ⬜ |
+| M-N | N | Search feels fast and finds the right node on all three graphs | Try band-x, bowie-covers, pittsburgh-jazz | ✅ Alec signed 2026-05-19 |
+| M-O | O | Directory panel is readable and useful for browsing | Spot-check grouping order; row density; type color dots | ✅ Alec signed 2026-05-19 |
 | M-P | P | Panel collapse/resize feels smooth; canvas doesn't lose state | Drag, collapse, reload — no jank | ⬜ |
 | M-Q | Q | Editing a real card and saving works end-to-end | Pick one factual error, fix it via the UI, confirm on disk + in app | ⬜ |
 | M-R | R | Creating a note from the UI works end-to-end | Pick a node, add a personal note, confirm new card + edge | ⬜ |
