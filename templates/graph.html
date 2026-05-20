@@ -11,7 +11,9 @@
   </header>
   <div class="graph-stage" id="graph-stage">
     <aside id="directory-panel" aria-label="Card directory">
-      <p class="muted directory-empty">Loading…</p>
+      <div class="panel-content" id="directory-panel-content">
+        <p class="muted directory-empty">Loading…</p>
+      </div>
       <div class="panel-resize-handle" data-resize="left" aria-hidden="true"></div>
       <button class="panel-collapse-btn" data-collapse="left" type="button"
               aria-label="Collapse directory panel" title="Collapse directory">◀</button>
@@ -41,7 +43,9 @@
       <div class="panel-resize-handle" data-resize="right" aria-hidden="true"></div>
       <button class="panel-collapse-btn" data-collapse="right" type="button"
               aria-label="Collapse details panel" title="Collapse details">▶</button>
-      <p class="muted">Click a node to see details.</p>
+      <div class="panel-content" id="card-panel-content">
+        <p class="muted">Click a node to see details.</p>
+      </div>
     </aside>
   </div>
 </section>

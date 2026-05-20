@@ -6,8 +6,10 @@
 
   const SLUG = window.GRAPH_SLUG;
   const graphMount = document.getElementById("graph");
-  const panel = document.getElementById("card-panel");
-  const directoryPanel = document.getElementById("directory-panel");
+  const panel = document.getElementById("card-panel-content");
+  const directoryPanel = document.getElementById("directory-panel-content");
+  const cardPanelAside = document.getElementById("card-panel");
+  const directoryPanelAside = document.getElementById("directory-panel");
   const searchInput = document.getElementById("search-input");
   const searchResults = document.getElementById("search-results");
 
