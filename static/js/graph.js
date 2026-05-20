@@ -38,6 +38,12 @@
   let searchActiveIdx = -1;
   let searchCurrentResults = [];
 
+  // Track the currently rendered card so the Edit button can find its body_md
+  // and slug without a re-fetch. Reset whenever a new card is rendered.
+  let currentCard = null;
+  let editing = false;
+  let savedNotice = false;
+
   // Node styling per project_spec.md "Architecture decisions" table.
   // shape + color by card type. Used via vis-network groups config.
   const GROUPS = {
@@ -66,9 +72,24 @@
   }
 
   function renderCard(card) {
+    currentCard = card;
+    editing = false;
     const TALL = new Set(["album", "playlist", "show"]);
     const isTall = card.spotify_kind && TALL.has(card.spotify_kind);
     const parts = [];
+    const canEdit = typeof card.body_md === "string";
+    const editDisabled = canEdit ? "" : "disabled";
+    const editTitle = canEdit ? "Edit card body" : "frontmatter parse failed — edit manually";
+    parts.push(
+      `<div class="card-toolbar">` +
+      `<button type="button" class="card-edit-btn" data-card-edit ${editDisabled} ` +
+      `title="${escapeText(editTitle)}">Edit</button>` +
+      (savedNotice
+        ? `<span class="card-saved-notice" data-saved-notice>uncommitted edit on disk ` +
+          `<button type="button" data-saved-dismiss aria-label="Dismiss">×</button></span>`
+        : "") +
+      `</div>`
+    );
     if (card.image) {
       parts.push(`<img class="card-image" src="${escapeText(card.image)}" alt="">`);
     }
@@ -103,6 +124,9 @@
     const idx = nodeId.indexOf(":");
     if (idx < 0) return;
     const cardSlug = nodeId.slice(idx + 1);
+    // Dismiss saved-notice and exit edit mode when switching cards.
+    savedNotice = false;
+    editing = false;
     fetch(`/api/card/${encodeURIComponent(SLUG)}/${encodeURIComponent(cardSlug)}`)
       .then(r => {
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -384,6 +408,108 @@
     loadCard(targetId);
     const idx = targetId.indexOf(":");
     if (idx >= 0) setActiveDirectoryRow(targetId.slice(idx + 1));
+  });
+
+  // ── Edit mode ──────────────────────────────────────────────────────────
+  function enterEditMode() {
+    if (!currentCard || editing) return;
+    if (typeof currentCard.body_md !== "string") return;
+    editing = true;
+    const bodyDiv = panel.querySelector(".card-body");
+    if (!bodyDiv) return;
+    const editor = document.createElement("div");
+    editor.className = "card-editor";
+    editor.setAttribute("data-card-editor", "");
+    editor.innerHTML =
+      `<div class="card-editor-error" data-editor-error hidden></div>` +
+      `<textarea class="card-editor-textarea" data-editor-ta spellcheck="false"></textarea>` +
+      `<div class="card-editor-actions">` +
+      `<button type="button" class="card-editor-save" data-editor-save>Save</button>` +
+      `<button type="button" class="card-editor-cancel" data-editor-cancel>Cancel</button>` +
+      `</div>`;
+    bodyDiv.replaceWith(editor);
+    const ta = editor.querySelector("[data-editor-ta]");
+    ta.value = currentCard.body_md;
+    ta.focus();
+    // Disable the Edit button while editing.
+    const editBtn = panel.querySelector("[data-card-edit]");
+    if (editBtn) editBtn.disabled = true;
+  }
+
+  function exitEditMode() {
+    editing = false;
+    if (currentCard) renderCard(currentCard);
+  }
+
+  function showSaveError(msg) {
+    const errEl = panel.querySelector("[data-editor-error]");
+    if (!errEl) return;
+    errEl.textContent = msg;
+    errEl.hidden = false;
+  }
+
+  function saveEdit() {
+    if (!currentCard) return;
+    const ta = panel.querySelector("[data-editor-ta]");
+    if (!ta) return;
+    const body = ta.value;
+    const saveBtn = panel.querySelector("[data-editor-save]");
+    const cancelBtn = panel.querySelector("[data-editor-cancel]");
+    if (saveBtn) saveBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+    fetch(`/api/cards/${encodeURIComponent(SLUG)}/${encodeURIComponent(currentCard.slug)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: body }),
+    })
+      .then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (r.ok) {
+          savedNotice = true;
+          renderCard(data);
+          return;
+        }
+        if (r.status === 404) {
+          showSaveError("Card file not found on disk — it may have been deleted.");
+        } else if (r.status === 422) {
+          const lint = (data.stdout || data.error || "save failed").trim();
+          showSaveError("Lint failed; changes reverted:\n" + lint);
+        } else {
+          showSaveError(`Save failed (HTTP ${r.status}): ${data.error || ""}`);
+        }
+        if (saveBtn) saveBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+      })
+      .catch(e => {
+        showSaveError("Save failed: " + e.message);
+        if (saveBtn) saveBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+      });
+  }
+
+  panel.addEventListener("click", function (ev) {
+    if (ev.target.closest("[data-card-edit]")) {
+      ev.preventDefault();
+      enterEditMode();
+      return;
+    }
+    if (ev.target.closest("[data-editor-cancel]")) {
+      ev.preventDefault();
+      exitEditMode();
+      return;
+    }
+    if (ev.target.closest("[data-editor-save]")) {
+      ev.preventDefault();
+      saveEdit();
+      return;
+    }
+    if (ev.target.closest("[data-saved-dismiss]")) {
+      ev.preventDefault();
+      savedNotice = false;
+      const el = panel.querySelector("[data-saved-notice]");
+      if (el) el.remove();
+      return;
+    }
   });
 
   // ── Panel state: resize, collapse, persistence ─────────────────────────

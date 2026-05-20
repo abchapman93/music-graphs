@@ -102,6 +102,52 @@ def _derive_slug(stem: str) -> str:
     return stem.split("-", 1)[1]
 
 
+def split_frontmatter_bytes(raw: bytes) -> tuple[bytes, bytes] | None:
+    """Split a card file's bytes into (frontmatter_block, body_bytes).
+
+    The frontmatter block includes the leading ``---`` line, the YAML body,
+    and the closing ``---`` line plus its trailing newline. The body is
+    everything after — preserved bit-for-bit so the frontmatter can be
+    re-emitted verbatim alongside a new body.
+
+    Returns ``None`` if the file does not start with a ``---`` fence or
+    the closing fence cannot be found.
+    """
+    # Accept both \n and \r\n line endings; emit them back unchanged.
+    # We only need to locate the two fence lines.
+    if not raw.startswith(b"---"):
+        return None
+    # Require a newline after the opening fence.
+    nl = raw.find(b"\n", 3)
+    if nl < 0:
+        return None
+    # Opening fence line must be exactly "---" (allow trailing \r).
+    opening = raw[:nl].rstrip(b"\r")
+    if opening != b"---":
+        return None
+    # Search for a closing "---" on its own line.
+    search_from = nl + 1
+    while True:
+        idx = raw.find(b"\n---", search_from - 1)
+        if idx < 0:
+            return None
+        # idx points at the "\n" before "---". The closing fence starts at idx+1.
+        end_of_fence_line = raw.find(b"\n", idx + 1)
+        if end_of_fence_line < 0:
+            # Closing fence with no trailing newline — treat as end of file.
+            line = raw[idx + 1:].rstrip(b"\r")
+            if line == b"---":
+                return raw[: len(raw)], b""
+            search_from = idx + 4
+            continue
+        line = raw[idx + 1: end_of_fence_line].rstrip(b"\r")
+        if line == b"---":
+            fm_block = raw[: end_of_fence_line + 1]
+            body = raw[end_of_fence_line + 1:]
+            return fm_block, body
+        search_from = end_of_fence_line + 1
+
+
 def parse_card(path: Path) -> dict:
     """Parse a markdown card file and return the schema documented in
     ``docs/plans/sprint_05172026/project_spec.md`` (section "Parsed card").

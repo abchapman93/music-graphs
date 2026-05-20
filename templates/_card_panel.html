@@ -1,5 +1,9 @@
 {# Partial: card detail panel body. Shared by card.html and the JS-rendered
    side panel uses the same DOM shape. #}
+<div class="card-toolbar">
+  <button type="button" class="card-edit-btn" data-card-edit
+          title="Edit card body">Edit</button>
+</div>
 {% if card.image %}
 <img class="card-image" src="{{ card.image }}" alt="">
 {% endif %}

@@ -9,9 +9,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, render_template, send_from_directory
+import sys
 
-from lib.cards import parse_card
+from flask import Flask, abort, jsonify, render_template, request, send_from_directory
+
+from lib.cards import parse_card, split_frontmatter_bytes
+
+# Import the per-graph linter so writes can be gated without shelling out
+# (subprocess works too but importing keeps it in-process and per-graph).
+sys.path.insert(0, str(Path(__file__).parent))
+from tools.lint_graphs import lint_graph  # noqa: E402
 from lib.graph import build_graph, list_graphs
 from lib.spotify import spotify_embed_url
 
@@ -69,6 +76,7 @@ def _build_card_payload(card: dict) -> dict:
         "display_frontmatter": display_fm,
         "image": image,
         "body_html": card["body_html"],
+        "body_md": card.get("body_md", ""),
         "spotify_embed_url": embed,
         "spotify_kind": spotify_kind,
         "spotify_tall": spotify_kind in SPOTIFY_TALL_KINDS if spotify_kind else False,
@@ -165,6 +173,55 @@ def api_card(graph_slug, card_slug):
     path = _find_card_path(graph_slug, card_slug)
     if path is None:
         abort(404)
+    card = parse_card(path)
+    return jsonify(_build_card_payload(card))
+
+
+@app.route("/api/cards/<graph_slug>/<card_slug>", methods=["PUT"])
+def api_update_card(graph_slug, card_slug):
+    """Replace the body (markdown after frontmatter) of a card on disk.
+
+    Request body: ``{"body": "<markdown>"}``. Frontmatter is preserved
+    bit-for-bit — we re-emit the original frontmatter block verbatim and
+    rewrite only the body bytes that follow. On lint failure the file is
+    restored from the in-memory backup and a 422 is returned with the
+    lint output so the editor can surface it inline.
+    """
+    path = _find_card_path(graph_slug, card_slug)
+    if path is None:
+        abort(404)
+    payload = request.get_json(silent=True) or {}
+    new_body = payload.get("body")
+    if not isinstance(new_body, str):
+        return jsonify({"error": "missing or non-string 'body' field"}), 400
+
+    original_bytes = path.read_bytes()
+    split = split_frontmatter_bytes(original_bytes)
+    if split is None:
+        return jsonify({
+            "error": "frontmatter parse failed — refusing to edit",
+        }), 422
+    fm_block, _old_body = split
+
+    # Ensure the new body starts on its own line and ends with a single
+    # trailing newline so the file remains well-formed.
+    body_bytes = new_body.encode("utf-8")
+    if body_bytes and not body_bytes.endswith(b"\n"):
+        body_bytes += b"\n"
+    new_bytes = fm_block + body_bytes
+
+    path.write_bytes(new_bytes)
+
+    # Lint only the affected graph. Any error reverts the write.
+    errs = lint_graph(_graph_dir(graph_slug))
+    if errs:
+        path.write_bytes(original_bytes)
+        return jsonify({
+            "error": "lint failed; changes reverted",
+            "stdout": "\n".join(errs),
+            "stderr": "",
+        }), 422
+
     card = parse_card(path)
     return jsonify(_build_card_payload(card))
 
