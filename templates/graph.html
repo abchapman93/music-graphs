@@ -50,6 +50,34 @@
   </div>
 </section>
 
+<div id="note-modal" class="note-modal" hidden aria-hidden="true" role="dialog" aria-label="Create note">
+  <div class="note-modal-backdrop" data-note-cancel></div>
+  <div class="note-modal-dialog" role="document">
+    <h3 class="note-modal-title">Add a note</h3>
+    <p class="note-modal-source muted" data-note-source></p>
+    <div class="note-modal-error" data-note-error hidden></div>
+    <div class="note-modal-field">
+      <fieldset class="note-modal-types">
+        <legend>Type</legend>
+        <label><input type="radio" name="note-type" value="note" checked> Note</label>
+        <label><input type="radio" name="note-type" value="memory"> Memory</label>
+      </fieldset>
+    </div>
+    <div class="note-modal-field">
+      <label for="note-title">Title</label>
+      <input id="note-title" type="text" data-note-title autocomplete="off" maxlength="200">
+    </div>
+    <div class="note-modal-field">
+      <label for="note-body">Body (markdown)</label>
+      <textarea id="note-body" data-note-body rows="6" spellcheck="false"></textarea>
+    </div>
+    <div class="note-modal-actions">
+      <button type="button" class="note-modal-create" data-note-create>Create</button>
+      <button type="button" class="note-modal-cancel" data-note-cancel>Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <script>
   window.GRAPH_SLUG = "{{ slug }}";

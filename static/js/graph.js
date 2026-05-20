@@ -84,6 +84,8 @@
       `<div class="card-toolbar">` +
       `<button type="button" class="card-edit-btn" data-card-edit ${editDisabled} ` +
       `title="${escapeText(editTitle)}">Edit</button>` +
+      `<button type="button" class="card-note-btn" data-card-note ` +
+      `title="Add a note linked to this card">+ Note</button>` +
       (savedNotice
         ? `<span class="card-saved-notice" data-saved-notice>uncommitted edit on disk ` +
           `<button type="button" data-saved-dismiss aria-label="Dismiss">×</button></span>`
@@ -487,10 +489,148 @@
       });
   }
 
+  // ── New note modal (Track R) ───────────────────────────────────────────
+  const noteModal = document.getElementById("note-modal");
+
+  function openNoteModal() {
+    if (!noteModal || !currentCard) return;
+    const titleEl = noteModal.querySelector("[data-note-title]");
+    const bodyEl = noteModal.querySelector("[data-note-body]");
+    const errEl = noteModal.querySelector("[data-note-error]");
+    const srcEl = noteModal.querySelector("[data-note-source]");
+    const radios = noteModal.querySelectorAll('input[name="note-type"]');
+    if (titleEl) titleEl.value = "";
+    if (bodyEl) bodyEl.value = "";
+    if (errEl) { errEl.hidden = true; errEl.textContent = ""; }
+    radios.forEach(r => { r.checked = r.value === "note"; });
+    if (srcEl) {
+      srcEl.textContent =
+        `Will be linked from ${currentCard.type}: ${currentCard.name}`;
+    }
+    noteModal.hidden = false;
+    noteModal.setAttribute("aria-hidden", "false");
+    setTimeout(() => { if (titleEl) titleEl.focus(); }, 0);
+  }
+
+  function closeNoteModal() {
+    if (!noteModal) return;
+    noteModal.hidden = true;
+    noteModal.setAttribute("aria-hidden", "true");
+  }
+
+  function showNoteError(msg) {
+    if (!noteModal) return;
+    const errEl = noteModal.querySelector("[data-note-error]");
+    if (!errEl) return;
+    errEl.textContent = msg;
+    errEl.hidden = false;
+  }
+
+  function submitNote() {
+    if (!noteModal || !currentCard) return;
+    const titleEl = noteModal.querySelector("[data-note-title]");
+    const bodyEl = noteModal.querySelector("[data-note-body]");
+    const createBtn = noteModal.querySelector("[data-note-create]");
+    const cancelBtn = noteModal.querySelector("[data-note-cancel]");
+    const typeRadio = noteModal.querySelector('input[name="note-type"]:checked');
+    const title = (titleEl && titleEl.value || "").trim();
+    const body = (bodyEl && bodyEl.value || "").trim();
+    const noteType = typeRadio ? typeRadio.value : "note";
+    if (title.length < 3) {
+      showNoteError("Title must be at least 3 characters.");
+      return;
+    }
+    if (body.length < 1) {
+      showNoteError("Body is required.");
+      return;
+    }
+    if (createBtn) createBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    fetch(`/api/notes/${encodeURIComponent(SLUG)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: noteType,
+        title: title,
+        body: body,
+        source_slug: currentCard.slug,
+        source_type: currentCard.type,
+      }),
+    })
+      .then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (r.ok) {
+          closeNoteModal();
+          // Refresh canvas + directory; auto-select the new node.
+          const newId = `${data.type}:${data.slug}`;
+          Promise.all([refreshGraph(), loadCardIndex()]).then(() => {
+            selectNode(newId);
+          });
+          return;
+        }
+        if (r.status === 422) {
+          const lint = (data.stdout || data.error || "create failed").trim();
+          showNoteError("Lint failed; changes reverted:\n" + lint);
+        } else {
+          showNoteError(`Create failed (HTTP ${r.status}): ${data.error || ""}`);
+        }
+        if (createBtn) createBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+      })
+      .catch(e => {
+        showNoteError("Create failed: " + e.message);
+        if (createBtn) createBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+      });
+  }
+
+  function refreshGraph() {
+    return fetch(`/api/graph/${encodeURIComponent(SLUG)}`)
+      .then(r => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(data => {
+        if (!network) return;
+        const nodes = new vis.DataSet(data.nodes || []);
+        const edges = new vis.DataSet(data.edges || []);
+        network.setData({ nodes: nodes, edges: edges });
+      })
+      .catch(() => {});
+  }
+
+  if (noteModal) {
+    noteModal.addEventListener("click", ev => {
+      if (ev.target.closest("[data-note-cancel]")) {
+        ev.preventDefault();
+        closeNoteModal();
+        return;
+      }
+      if (ev.target.closest("[data-note-create]")) {
+        ev.preventDefault();
+        submitNote();
+        return;
+      }
+    });
+    document.addEventListener("keydown", ev => {
+      if (noteModal.hidden) return;
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        closeNoteModal();
+      }
+    });
+  }
+
   panel.addEventListener("click", function (ev) {
     if (ev.target.closest("[data-card-edit]")) {
       ev.preventDefault();
       enterEditMode();
+      return;
+    }
+    if (ev.target.closest("[data-card-note]")) {
+      ev.preventDefault();
+      openNoteModal();
       return;
     }
     if (ev.target.closest("[data-editor-cancel]")) {

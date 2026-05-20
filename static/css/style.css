@@ -660,3 +660,130 @@ body.panel-resizing { cursor: col-resize; user-select: none; }
   white-space: pre-wrap;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
+
+/* "+ Note" button — matches card-edit-btn style (Track R). */
+.card-note-btn {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.card-note-btn:hover { background: #f3f4f6; }
+.card-note-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* New-note modal (Track R) */
+.note-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.note-modal[hidden] { display: none; }
+.note-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+}
+.note-modal-dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: min(520px, 90vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1.25rem 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.note-modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.note-modal-source {
+  margin: 0;
+  font-size: 0.8rem;
+}
+.note-modal-error {
+  font-size: 0.78rem;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  white-space: pre-wrap;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.note-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.note-modal-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.note-modal-field input[type="text"],
+.note-modal-field textarea {
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.note-modal-field textarea {
+  min-height: 140px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+.note-modal-types {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.note-modal-types legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0;
+}
+.note-modal-types label {
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.note-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+.note-modal-create,
+.note-modal-cancel {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.note-modal-create {
+  background: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+.note-modal-create:hover { background: #1d4ed8; }
+.note-modal-cancel { background: #fff; }
+.note-modal-cancel:hover { background: #f3f4f6; }
+.note-modal-create[disabled],
+.note-modal-cancel[disabled] { opacity: 0.5; cursor: not-allowed; }

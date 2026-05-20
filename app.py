@@ -22,6 +22,13 @@ from tools.lint_graphs import lint_graph  # noqa: E402
 from lib.graph import build_graph, list_graphs
 from lib.spotify import spotify_embed_url
 
+# Skill libs reused by the note-creation endpoint (Track R).
+_SKILLS_ROOT = Path(__file__).parent / ".claude" / "skills"
+sys.path.insert(0, str(_SKILLS_ROOT / "add-node" / "scripts"))
+sys.path.insert(0, str(_SKILLS_ROOT / "add-edge" / "scripts"))
+from write_card import write_card  # noqa: E402
+from add_edge import add_edge, CardNotFoundError  # noqa: E402
+
 app = Flask(__name__)
 
 GRAPHS_ROOT = Path(__file__).parent / "graphs"
@@ -224,6 +231,103 @@ def api_update_card(graph_slug, card_slug):
 
     card = parse_card(path)
     return jsonify(_build_card_payload(card))
+
+
+@app.route("/api/notes/<graph_slug>", methods=["POST"])
+def api_create_note(graph_slug):
+    """Create a new ``note-*.md`` or ``memory-*.md`` card and write a wikilink
+    edge from the source card body to the new card.
+
+    Request body: ``{type, title, body, source_slug, source_type}``.
+
+    Implementation:
+    - Delegate the card write to ``add-node`` skill's ``write_card``.
+    - Delegate the edge insertion to ``add-edge`` skill's ``add_edge``.
+    - Run ``lint_graph`` in-process over the affected graph.
+    - On lint failure: delete the new file and restore the source body from
+      the in-memory backup; return 422 with the lint output.
+    """
+    gdir = _graph_dir(graph_slug)
+    if not (gdir / "cards").is_dir():
+        abort(404)
+
+    payload = request.get_json(silent=True) or {}
+    note_type = payload.get("type")
+    title = payload.get("title")
+    body = payload.get("body")
+    source_slug = payload.get("source_slug")
+    source_type = payload.get("source_type")
+
+    if note_type not in ("note", "memory"):
+        return jsonify({"error": "type must be 'note' or 'memory'"}), 400
+    if not isinstance(title, str) or len(title.strip()) < 3:
+        return jsonify({"error": "title is required (>=3 chars)"}), 400
+    if not isinstance(body, str) or len(body.strip()) < 1:
+        return jsonify({"error": "body is required"}), 400
+    if not isinstance(source_slug, str) or not source_slug:
+        return jsonify({"error": "source_slug is required"}), 400
+    if not isinstance(source_type, str) or not source_type:
+        return jsonify({"error": "source_type is required"}), 400
+
+    source_path = _find_card_path(graph_slug, source_slug)
+    if source_path is None:
+        return jsonify({"error": f"source card not found: {source_slug}"}), 404
+    source_backup = source_path.read_bytes()
+
+    repo_root = Path(__file__).parent
+    graphs_root = GRAPHS_ROOT
+
+    # 1) Write the new card. Skip the skill's lint — we lint once at the end.
+    try:
+        new_path = write_card(
+            graph_slug,
+            note_type,
+            title.strip(),
+            repo_root=repo_root,
+            graphs_root=graphs_root,
+            body=body.strip(),
+            run_lint=False,
+        )
+    except (FileExistsError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    new_slug = new_path.stem.split("-", 1)[1] if "-" in new_path.stem else new_path.stem
+
+    # 2) Add the edge from source -> new note. Skip the skill's lint here too;
+    #    skill default is one-way (symmetric=False), no relationship verb.
+    try:
+        add_edge(
+            graph_slug,
+            source_slug,
+            new_slug,
+            repo_root=repo_root,
+            graphs_root=graphs_root,
+            run_lint=False,
+        )
+    except CardNotFoundError as exc:
+        new_path.unlink(missing_ok=True)
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        new_path.unlink(missing_ok=True)
+        return jsonify({"error": f"add_edge failed: {exc}"}), 422
+
+    # 3) Lint the affected graph in-process. Revert both writes on failure.
+    errs = lint_graph(gdir)
+    if errs:
+        new_path.unlink(missing_ok=True)
+        source_path.write_bytes(source_backup)
+        return jsonify({
+            "error": "lint failed; changes reverted",
+            "stdout": "\n".join(errs),
+            "stderr": "",
+        }), 422
+
+    return jsonify({
+        "slug": new_slug,
+        "type": note_type,
+        "name": title.strip(),
+        "url": f"/graph/{graph_slug}/card/{new_slug}",
+    })
 
 
 @app.route("/graph/<slug>/card/<card_slug>")

@@ -243,6 +243,132 @@ def test_put_card_404_when_missing(tmp_path, monkeypatch):
     assert resp.status_code == 404
 
 
+def _seed_tmp_graph(tmp_path):
+    """Build a minimal tmp graph with two linked cards used by Track R tests."""
+    gdir = tmp_path / "tmpgraph"
+    cards = gdir / "cards"
+    cards.mkdir(parents=True)
+    cards.joinpath("person-alpha.md").write_bytes(
+        b"---\nname: Alpha\ntype: person\n---\nAlpha links to [[person:beta]].\n"
+    )
+    cards.joinpath("person-beta.md").write_bytes(
+        b"---\nname: Beta\ntype: person\n---\nBeta links to [[person:alpha]].\n"
+    )
+    return gdir
+
+
+def test_post_note_creates_card(tmp_path, monkeypatch):
+    """R1 — POST creates a new note-*.md card with frontmatter + body and lint passes."""
+    import app as app_mod
+    gdir = _seed_tmp_graph(tmp_path)
+    monkeypatch.setattr(app_mod, "GRAPHS_ROOT", tmp_path)
+
+    resp = _client().post(
+        "/api/notes/tmpgraph",
+        json={
+            "type": "note",
+            "title": "Studio anecdote",
+            "body": "Heard this on the studio tour.",
+            "source_slug": "alpha",
+            "source_type": "person",
+        },
+    )
+    assert resp.status_code == 200, resp.get_data(as_text=True)
+    payload = resp.get_json()
+    assert payload["type"] == "note"
+    assert payload["slug"] == "studio-anecdote"
+    assert payload["name"] == "Studio anecdote"
+    assert payload["url"] == "/graph/tmpgraph/card/studio-anecdote"
+
+    new_path = gdir / "cards" / "note-studio-anecdote.md"
+    assert new_path.is_file()
+    body_text = new_path.read_text(encoding="utf-8")
+    assert "type: note" in body_text
+    assert 'name: "Studio anecdote"' in body_text
+    assert "Heard this on the studio tour." in body_text
+
+
+def test_post_note_writes_edge_back(tmp_path, monkeypatch):
+    """R2 — source card body gains a `[[note:<slug>]]` wikilink edge."""
+    import app as app_mod
+    gdir = _seed_tmp_graph(tmp_path)
+    monkeypatch.setattr(app_mod, "GRAPHS_ROOT", tmp_path)
+
+    resp = _client().post(
+        "/api/notes/tmpgraph",
+        json={
+            "type": "memory",
+            "title": "Backstage memory",
+            "body": "Backstage at the Birdland gig.",
+            "source_slug": "alpha",
+            "source_type": "person",
+        },
+    )
+    assert resp.status_code == 200, resp.get_data(as_text=True)
+    payload = resp.get_json()
+    assert payload["type"] == "memory"
+
+    src_text = (gdir / "cards" / "person-alpha.md").read_text(encoding="utf-8")
+    assert f"[[memory:{payload['slug']}" in src_text
+
+
+def test_post_note_lint_failure_reverts(tmp_path, monkeypatch):
+    """R3 — lint failure during note create reverts both writes and returns 422.
+
+    Force a lint failure by stubbing ``lint_graph`` to return an error list.
+    Verifies the new card file is deleted and the source card is restored
+    bit-for-bit.
+    """
+    import app as app_mod
+    gdir = _seed_tmp_graph(tmp_path)
+    monkeypatch.setattr(app_mod, "GRAPHS_ROOT", tmp_path)
+
+    src_before = (gdir / "cards" / "person-alpha.md").read_bytes()
+    monkeypatch.setattr(
+        app_mod, "lint_graph", lambda _gdir: ["tmpgraph: synthetic lint failure"]
+    )
+
+    resp = _client().post(
+        "/api/notes/tmpgraph",
+        json={
+            "type": "note",
+            "title": "Doomed note",
+            "body": "Should be rolled back.",
+            "source_slug": "alpha",
+            "source_type": "person",
+        },
+    )
+    assert resp.status_code == 422
+    data = resp.get_json()
+    assert "lint" in data.get("error", "").lower()
+    assert "synthetic lint failure" in (data.get("stdout") or "")
+
+    # New file gone, source restored bit-for-bit.
+    assert not (gdir / "cards" / "note-doomed-note.md").exists()
+    assert (gdir / "cards" / "person-alpha.md").read_bytes() == src_before
+
+
+def test_post_note_validation_errors(tmp_path, monkeypatch):
+    """Edge — invalid type/title/body rejected with 400."""
+    import app as app_mod
+    _seed_tmp_graph(tmp_path)
+    monkeypatch.setattr(app_mod, "GRAPHS_ROOT", tmp_path)
+
+    bad_type = _client().post(
+        "/api/notes/tmpgraph",
+        json={"type": "person", "title": "ok title", "body": "ok",
+              "source_slug": "alpha", "source_type": "person"},
+    )
+    assert bad_type.status_code == 400
+
+    short_title = _client().post(
+        "/api/notes/tmpgraph",
+        json={"type": "note", "title": "xy", "body": "ok",
+              "source_slug": "alpha", "source_type": "person"},
+    )
+    assert short_title.status_code == 400
+
+
 def test_cards_index_ok():
     resp = _client().get("/cards")
     assert resp.status_code == 200
