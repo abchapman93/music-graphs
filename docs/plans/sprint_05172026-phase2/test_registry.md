@@ -66,9 +66,9 @@ See `_phase-2.5-plan.md` for full track briefs.
 | K1 | K | Graph view fills viewport (full-bleed `graph-shell`; ~78% canvas, side panel `clamp(280px, 22vw, 380px)`) | ✅ (merge 6fe0ed2) |
 | K2 | K | Physics freeze on stabilization; "Frozen" checkbox toggle in `.graph-controls` | ✅ (merge 6fe0ed2) |
 | K3 | K | `+` / `−` / `⤢` (fit) buttons in top-right of canvas; scroll-zoom preserved | ✅ (merge 6fe0ed2) |
-| L1 | L | `retrieve-wikipedia-category` skill: given a Category URL, returns member pages (title + URL) | ⬜ |
-| L2 | L | `expand-graph` reads `seed_sources:` from graph root card and uses Wikipedia categories as candidate source | ⬜ |
-| L3 | L | bowie-covers and pittsburgh-jazz root cards updated with `seed_sources:` Wikipedia category URLs | ⬜ |
+| L1 | L | `retrieve-wikipedia-category` skill: given a Category URL, returns member pages (title + URL) | ✅ (worktree mg-wt-resources) |
+| L2 | L | `expand-graph` reads `resources:` from graph root card and uses Wikipedia categories as candidate source (typed schema, replaced provisional `seed_sources:`) | ✅ (worktree mg-wt-resources) |
+| L3 | L | bowie-covers and pittsburgh-jazz root cards updated with `resources:` Wikipedia category URLs (band-x n/a — no category) | ✅ (worktree mg-wt-resources) |
 | Z3 | all | Phase 1+2 pytest still passes after Phase 2.5 merges | ⬜ |
 | Z4 | all | `lint_graphs.py` reports 0 errors across all 3 graphs after Phase 2.5 merges | ⬜ |
 

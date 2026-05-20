@@ -40,6 +40,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Sequence
@@ -390,3 +391,182 @@ def run_expand_graph(
         result.lint_returncode = _run_lint(repo_root)
 
     return result
+
+
+# ---------- Phase 1 (orchestrated routine) helpers ----------
+
+
+_SLUG_PUNCT_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slugify(name: str) -> str:
+    """Match the slug rule used by ``add-node``'s ``slugify``. Duplicated
+    here so callers can import a single module; kept in lockstep with
+    ``write_card.slugify``."""
+    nfkd = unicodedata.normalize("NFKD", name)
+    ascii_only = nfkd.encode("ascii", "ignore").decode("ascii").lower()
+    slug = _SLUG_PUNCT_RE.sub("-", ascii_only).strip("-")
+    return slug or "card"
+
+
+def _import_resources_module(repo_root: Path):
+    """Locate ``lib/resources.py`` lazily so this module imports cleanly
+    even when the lib path differs (e.g., tests)."""
+    repo_root = Path(repo_root)
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    from lib.resources import parse_resources, Resource  # type: ignore  # noqa: WPS433
+
+    return parse_resources, Resource
+
+
+def _import_wikipedia_fetcher(repo_root: Path):
+    """Locate the ``retrieve-wikipedia-category`` helper lazily."""
+    scripts = repo_root / ".claude" / "skills" / "retrieve-wikipedia-category" / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    from fetch_category import fetch_category_members  # type: ignore  # noqa: WPS433
+
+    return fetch_category_members
+
+
+FetchResourceFn = Callable[[object], list[dict]]
+"""Type alias for the resource-probe seam.
+
+Callable takes a ``Resource`` and returns a list of member dicts
+(``{"title", "url", "pageid", "ns"}`` for Wikipedia, similar shape for
+other resolvers). Tests inject a closure that returns canned members.
+"""
+
+
+def _default_fetch_resource_fn(repo_root: Path) -> FetchResourceFn:
+    """Build a default ``fetch_resource_fn`` that dispatches by
+    ``Resource.type``."""
+
+    def fetch(resource) -> list[dict]:
+        if resource.type == "wikipedia-category":
+            fetch_category_members = _import_wikipedia_fetcher(repo_root)
+            return fetch_category_members(resource.url)
+        # spotify-playlist / website / unknown — caller handles upstream.
+        return []
+
+    return fetch
+
+
+def build_plan(
+    graph: str,
+    *,
+    repo_root: Optional[Path] = None,
+    graphs_root: Optional[Path] = None,
+    stopping_rule: Optional[str] = None,
+    target_n: Optional[int] = None,
+    batch_size: int = CANDIDATE_CEILING_DEFAULT,
+    fetch_resource_fn: Optional[FetchResourceFn] = None,
+    probe_limit: int = 200,
+) -> dict:
+    """Run Phase 1 of the orchestrated expansion: read the graph, parse
+    declared ``resources:``, probe each one, and return a plan dict the
+    orchestrator can present to the user before continuing to Phase 2.
+
+    The ``fetch_resource_fn`` parameter is the test seam — pass a
+    closure that returns canned probe results to avoid network. The
+    default dispatches by ``Resource.type``: ``wikipedia-category``
+    calls the ``retrieve-wikipedia-category`` helper; other types are
+    silently passed through with an ``estimated_net_new=None``.
+
+    The returned dict shape is the contract documented in
+    ``SKILL.md``'s Phase 1 step 4.
+    """
+    if repo_root is None:
+        repo_root = Path.cwd()
+    repo_root = Path(repo_root)
+    if graphs_root is None:
+        graphs_root = repo_root / "graphs"
+    graphs_root = Path(graphs_root)
+
+    scope = _read_scope(graphs_root, graph)
+    parse_resources, _Resource = _import_resources_module(repo_root)
+    readme_path = graphs_root / graph / "README.md"
+    resources = parse_resources(readme_path)
+
+    fetch_fn = fetch_resource_fn or _default_fetch_resource_fn(repo_root)
+
+    existing_slug_set = {s.split(":", 1)[1] for s in scope["existing_slugs"] if ":" in s}
+
+    sources: list[dict] = []
+    for r in resources:
+        entry: dict = {
+            "type": r.type,
+            "url": r.url,
+            "label": r.label,
+            "resolver": r.resolver,
+        }
+        if r.resolver is None:
+            entry["members"] = []
+            entry["estimated_net_new"] = None
+            entry["note"] = "no resolver; free-text seed"
+            sources.append(entry)
+            continue
+        if r.type == "spotify-playlist":
+            entry["members"] = []
+            entry["estimated_net_new"] = None
+            entry["note"] = "playlist resolver deferred"
+            sources.append(entry)
+            continue
+        try:
+            members = list(fetch_fn(r))[:probe_limit]
+        except Exception as exc:
+            entry["members"] = []
+            entry["estimated_net_new"] = None
+            entry["error"] = f"{type(exc).__name__}: {exc}"
+            sources.append(entry)
+            continue
+        # Estimate net-new by slugifying titles and comparing to existing slugs.
+        net_new = sum(
+            1
+            for m in members
+            if _slugify(str(m.get("title", ""))) not in existing_slug_set
+        )
+        entry["members"] = members
+        entry["estimated_net_new"] = net_new
+        sources.append(entry)
+
+    return {
+        "graph": graph,
+        "stopping_rule": stopping_rule,
+        "target_n": target_n,
+        "batch_size": _clamp_ceiling(batch_size),
+        "sources": sources,
+        "existing_slugs": scope["existing_slugs"],
+        "scope_summary": scope["readme"][:500],
+    }
+
+
+def dedupe_against_existing(
+    candidates: list[dict], existing_slugs: list[str]
+) -> list[dict]:
+    """Drop candidates whose ``slug_hint`` (or slugified ``name``) is
+    already in ``existing_slugs`` (which may be ``"type:slug"`` or bare
+    ``slug``).
+    """
+    seen = set()
+    for s in existing_slugs:
+        seen.add(s.split(":", 1)[1] if ":" in s else s)
+    out: list[dict] = []
+    for c in candidates:
+        slug = c.get("slug_hint") or _slugify(c.get("name", ""))
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        out.append(c)
+    return out
+
+
+def enforce_ceiling(
+    candidates: list[dict], ceiling: int = CANDIDATE_CEILING_DEFAULT
+) -> tuple[list[dict], int]:
+    """Clamp ``candidates`` to the per-batch ceiling. Returns
+    ``(truncated, overflow)`` mirroring ``generate_candidates``."""
+    capped = _clamp_ceiling(ceiling)
+    overflow = max(0, len(candidates) - capped)
+    return candidates[:capped], overflow

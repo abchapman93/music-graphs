@@ -157,6 +157,22 @@ def _format_wikilinks_sentence(wikilinks: Sequence) -> str:
     return "Related: " + ", ".join(rendered[:-1]) + f", and {rendered[-1]}."
 
 
+def _infer_repo_root(start: Path) -> Path:
+    """Walk up from ``start`` until a directory containing ``tools/lint_graphs.py``
+    and ``graphs/`` is found. Worktree-safe: the old ``parents[3]`` heuristic
+    pointed at the worktree root, which lacks the ``tools/`` directory in some
+    layouts. Searching for the actual landmarks is robust against worktree
+    nesting depth.
+    """
+    for candidate in [start, *start.parents]:
+        if (candidate / "tools" / "lint_graphs.py").is_file() and (
+            candidate / "graphs"
+        ).is_dir():
+            return candidate
+    # Fall back to the legacy heuristic so callers still get a sensible default.
+    return start.resolve().parents[3]
+
+
 def _run_lint(
     graphs_root: Path,
     repo_root: Path,
@@ -233,7 +249,7 @@ def write_card(
         removed before this is raised.
     """
     if repo_root is None:
-        repo_root = Path(__file__).resolve().parents[3]
+        repo_root = _infer_repo_root(Path(__file__).resolve())
     else:
         repo_root = Path(repo_root)
     if graphs_root is None:

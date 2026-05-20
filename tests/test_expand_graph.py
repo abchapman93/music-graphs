@@ -25,6 +25,9 @@ from expand_graph import (  # noqa: E402
     CANDIDATE_CEILING_MAX,
     Candidate,
     ExpansionResult,
+    build_plan,
+    dedupe_against_existing,
+    enforce_ceiling,
     generate_candidates,
     run_expand_graph,
 )
@@ -316,3 +319,116 @@ def test_run_expand_graph_approved_none_writes_all(tmp_path):
     )
     assert calls == ["Test Album 1", "Test Album 2"]
     assert len(result.created_paths) == 2
+
+
+# ---------- Phase 1 orchestrated-routine helpers ----------
+
+
+def _make_pittsburgh_like_graph(tmp_path: Path, with_resources: bool = True) -> Path:
+    graphs_root = tmp_path / "graphs"
+    cards = graphs_root / "pittsburgh-jazz" / "cards"
+    cards.mkdir(parents=True)
+    fm = (
+        '---\nname: "Pittsburgh Jazz"\n'
+        'description: "Pittsburgh-rooted jazz."\n'
+    )
+    if with_resources:
+        fm += (
+            'resources:\n'
+            '  - type: wikipedia-category\n'
+            '    url: https://en.wikipedia.org/wiki/Category:Jazz_musicians_from_Pittsburgh\n'
+            '    label: "Pittsburgh jazz musicians"\n'
+        )
+    fm += '---\n\nA graph of Pittsburgh-rooted jazz artists.\n'
+    (graphs_root / "pittsburgh-jazz" / "README.md").write_text(fm, encoding="utf-8")
+    (cards / "person-erroll-garner.md").write_text(
+        '---\ntype: person\nname: "Erroll Garner"\n---\n\nPittsburgh pianist.\n',
+        encoding="utf-8",
+    )
+    return graphs_root
+
+
+def test_build_plan_reads_resources_and_probes(tmp_path):
+    graphs_root = _make_pittsburgh_like_graph(tmp_path)
+
+    canned_members = [
+        {"title": "Erroll Garner", "url": "x", "pageid": 1, "ns": 0},
+        {"title": "Stanley Turrentine", "url": "x", "pageid": 2, "ns": 0},
+        {"title": "Ahmad Jamal", "url": "x", "pageid": 3, "ns": 0},
+    ]
+
+    def fetch(resource):
+        assert resource.type == "wikipedia-category"
+        return canned_members
+
+    plan = build_plan(
+        "pittsburgh-jazz",
+        repo_root=tmp_path.parent,  # any path; lib resolution falls back
+        graphs_root=graphs_root,
+        stopping_rule="every artist >=1 track, target 10",
+        target_n=10,
+        batch_size=5,
+        fetch_resource_fn=fetch,
+    )
+    assert plan["graph"] == "pittsburgh-jazz"
+    assert plan["stopping_rule"] == "every artist >=1 track, target 10"
+    assert plan["target_n"] == 10
+    assert plan["batch_size"] == 5
+    assert len(plan["sources"]) == 1
+    src = plan["sources"][0]
+    assert src["type"] == "wikipedia-category"
+    assert len(src["members"]) == 3
+    # Erroll Garner is already in the graph -> net new is 2 (Turrentine + Jamal).
+    assert src["estimated_net_new"] == 2
+
+
+def test_build_plan_with_no_resources(tmp_path):
+    graphs_root = _make_pittsburgh_like_graph(tmp_path, with_resources=False)
+    plan = build_plan(
+        "pittsburgh-jazz",
+        repo_root=tmp_path.parent,
+        graphs_root=graphs_root,
+        fetch_resource_fn=lambda r: [],
+    )
+    assert plan["sources"] == []
+    assert plan["batch_size"] == 5  # default clamped
+
+
+def test_build_plan_fetch_error_recorded(tmp_path):
+    graphs_root = _make_pittsburgh_like_graph(tmp_path)
+
+    def fetch(resource):
+        raise RuntimeError("boom")
+
+    plan = build_plan(
+        "pittsburgh-jazz",
+        repo_root=tmp_path.parent,
+        graphs_root=graphs_root,
+        fetch_resource_fn=fetch,
+    )
+    src = plan["sources"][0]
+    assert src["estimated_net_new"] is None
+    assert "RuntimeError: boom" in src["error"]
+
+
+def test_dedupe_against_existing():
+    cands = [
+        {"name": "Erroll Garner", "slug_hint": "erroll-garner"},
+        {"name": "Stanley Turrentine", "slug_hint": "stanley-turrentine"},
+        {"name": "Stanley Turrentine"},  # dupe via slugified name
+        {"name": "Ahmad Jamal"},
+    ]
+    out = dedupe_against_existing(cands, ["person:erroll-garner"])
+    names = [c["name"] for c in out]
+    assert names == ["Stanley Turrentine", "Ahmad Jamal"]
+
+
+def test_enforce_ceiling_clamps_and_overflow():
+    cands = [{"name": f"c{i}"} for i in range(15)]
+    truncated, overflow = enforce_ceiling(cands, ceiling=20)  # clamped to 10
+    assert len(truncated) == 10
+    assert overflow == 5
+
+    truncated, overflow = enforce_ceiling(cands[:3], ceiling=5)
+    assert len(truncated) == 3
+    assert overflow == 0
