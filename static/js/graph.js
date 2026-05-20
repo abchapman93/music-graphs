@@ -7,6 +7,34 @@
   const SLUG = window.GRAPH_SLUG;
   const graphMount = document.getElementById("graph");
   const panel = document.getElementById("card-panel");
+  const directoryPanel = document.getElementById("directory-panel");
+  const searchInput = document.getElementById("search-input");
+  const searchResults = document.getElementById("search-results");
+
+  // Type → background color, parallel to GROUPS but in plain CSS form for dots.
+  const TYPE_COLOR = {
+    person: "#3b82f6",
+    group: "#3b82f6",
+    album: "#22c55e",
+    track: "#16a34a",
+    song: "#86efac",
+    location: "#f59e0b",
+    genre: "#a855f7",
+    note: "#facc15",
+    memory: "#ef4444",
+  };
+
+  // Directory render order (anything else falls to the end alphabetically).
+  const DIRECTORY_TYPE_ORDER = [
+    "person", "group", "album", "song", "track",
+    "location", "genre", "note", "memory",
+  ];
+
+  // Cache of /api/cards/<slug> for both search + directory.
+  let cardIndex = [];
+  let activeDirectorySlug = null;
+  let searchActiveIdx = -1;
+  let searchCurrentResults = [];
 
   // Node styling per project_spec.md "Architecture decisions" table.
   // shape + color by card type. Used via vis-network groups config.
@@ -92,6 +120,229 @@
     } catch (_) {}
   }
 
+  // Used by both search-hit selection and directory clicks. Centers the node
+  // and opens the right panel via the existing card-loading path.
+  function selectNode(typeAndSlug) {
+    // typeAndSlug shape: "<type>:<slug>" — same node id form used by vis-network.
+    if (!typeAndSlug) return;
+    if (network) {
+      try {
+        network.selectNodes([typeAndSlug]);
+        network.focus(typeAndSlug, { scale: 1.5, animation: true });
+      } catch (_) {}
+    }
+    loadCard(typeAndSlug);
+    // Sync directory active state.
+    const idx = typeAndSlug.indexOf(":");
+    if (idx >= 0) {
+      const cardSlug = typeAndSlug.slice(idx + 1);
+      setActiveDirectoryRow(cardSlug);
+    }
+  }
+
+  // ── Directory panel ────────────────────────────────────────────────────
+  function renderDirectory() {
+    if (!directoryPanel) return;
+    if (!cardIndex.length) {
+      directoryPanel.innerHTML = '<p class="muted directory-empty">No cards.</p>';
+      return;
+    }
+    // Group cards by type.
+    const groups = new Map();
+    for (const c of cardIndex) {
+      if (!groups.has(c.type)) groups.set(c.type, []);
+      groups.get(c.type).push(c);
+    }
+    // Order: DIRECTORY_TYPE_ORDER first, then any leftover alphabetically.
+    const seen = new Set();
+    const orderedTypes = [];
+    for (const t of DIRECTORY_TYPE_ORDER) {
+      if (groups.has(t)) { orderedTypes.push(t); seen.add(t); }
+    }
+    for (const t of Array.from(groups.keys()).sort()) {
+      if (!seen.has(t)) orderedTypes.push(t);
+    }
+
+    const out = [];
+    for (const t of orderedTypes) {
+      const rows = groups.get(t);
+      const color = TYPE_COLOR[t] || "#888";
+      out.push('<details class="directory-group" open>');
+      out.push(
+        `<summary>${escapeText(t)}<span class="directory-count">${rows.length}</span></summary>`
+      );
+      out.push('<ul class="directory-list">');
+      for (const r of rows) {
+        out.push(
+          `<li class="directory-row" data-card-row data-slug="${escapeText(r.slug)}" ` +
+          `data-type="${escapeText(r.type)}" title="${escapeText(r.slug)}">` +
+          `<span class="type-dot" style="background:${color}"></span>` +
+          `<span class="directory-row-label">${escapeText(r.name)}</span>` +
+          "</li>"
+        );
+      }
+      out.push("</ul>");
+      out.push("</details>");
+    }
+    directoryPanel.innerHTML = out.join("");
+    if (activeDirectorySlug) setActiveDirectoryRow(activeDirectorySlug);
+  }
+
+  function setActiveDirectoryRow(cardSlug) {
+    activeDirectorySlug = cardSlug;
+    if (!directoryPanel) return;
+    const rows = directoryPanel.querySelectorAll(".directory-row");
+    rows.forEach(row => {
+      if (row.getAttribute("data-slug") === cardSlug) {
+        row.classList.add("active");
+      } else {
+        row.classList.remove("active");
+      }
+    });
+  }
+
+  function wireDirectory() {
+    if (!directoryPanel) return;
+    directoryPanel.addEventListener("click", function (ev) {
+      const row = ev.target.closest("[data-card-row]");
+      if (!row) return;
+      const slug = row.getAttribute("data-slug");
+      const type = row.getAttribute("data-type");
+      if (!slug || !type) return;
+      selectNode(`${type}:${slug}`);
+    });
+  }
+
+  // ── Search ─────────────────────────────────────────────────────────────
+  function rankSearchHits(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const exact = [];
+    const prefix = [];
+    const substr = [];
+    for (const c of cardIndex) {
+      const name = (c.name || "").toLowerCase();
+      const slug = (c.slug || "").toLowerCase();
+      if (name === q || slug === q) {
+        exact.push(c);
+      } else if (name.startsWith(q) || slug.startsWith(q)) {
+        prefix.push(c);
+      } else if (name.includes(q) || slug.includes(q)) {
+        substr.push(c);
+      }
+    }
+    return exact.concat(prefix).concat(substr).slice(0, 12);
+  }
+
+  function renderSearchResults(hits) {
+    searchCurrentResults = hits;
+    searchActiveIdx = hits.length ? 0 : -1;
+    if (!hits.length) {
+      searchResults.innerHTML = "";
+      searchResults.removeAttribute("data-open");
+      return;
+    }
+    const out = [];
+    hits.forEach((c, i) => {
+      const color = TYPE_COLOR[c.type] || "#888";
+      out.push(
+        `<div class="search-result-item${i === 0 ? " active" : ""}" ` +
+        `data-id="${escapeText(c.type)}:${escapeText(c.slug)}" data-idx="${i}">` +
+        `<span class="search-result-dot" style="background:${color}"></span>` +
+        `<span class="search-result-label">${escapeText(c.name)}</span>` +
+        `<span class="search-result-slug">${escapeText(c.slug)}</span>` +
+        `<span class="search-result-type">${escapeText(c.type)}</span>` +
+        "</div>"
+      );
+    });
+    searchResults.innerHTML = out.join("");
+    searchResults.setAttribute("data-open", "1");
+  }
+
+  function updateSearchActiveClass() {
+    const items = searchResults.querySelectorAll(".search-result-item");
+    items.forEach((el, i) => {
+      if (i === searchActiveIdx) el.classList.add("active");
+      else el.classList.remove("active");
+    });
+  }
+
+  function clearSearch() {
+    if (!searchInput) return;
+    searchInput.value = "";
+    searchResults.innerHTML = "";
+    searchResults.removeAttribute("data-open");
+    searchCurrentResults = [];
+    searchActiveIdx = -1;
+  }
+
+  function wireSearch() {
+    if (!searchInput || !searchResults) return;
+    searchInput.addEventListener("input", () => {
+      const hits = rankSearchHits(searchInput.value);
+      renderSearchResults(hits);
+    });
+    searchInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") {
+        clearSearch();
+        searchInput.blur();
+        return;
+      }
+      if (!searchCurrentResults.length) return;
+      if (ev.key === "ArrowDown") {
+        ev.preventDefault();
+        searchActiveIdx = Math.min(searchActiveIdx + 1, searchCurrentResults.length - 1);
+        updateSearchActiveClass();
+      } else if (ev.key === "ArrowUp") {
+        ev.preventDefault();
+        searchActiveIdx = Math.max(searchActiveIdx - 1, 0);
+        updateSearchActiveClass();
+      } else if (ev.key === "Enter") {
+        ev.preventDefault();
+        if (searchActiveIdx < 0) return;
+        const pick = searchCurrentResults[searchActiveIdx];
+        if (!pick) return;
+        selectNode(`${pick.type}:${pick.slug}`);
+        clearSearch();
+      }
+    });
+    searchResults.addEventListener("click", (ev) => {
+      const item = ev.target.closest(".search-result-item");
+      if (!item) return;
+      const id = item.getAttribute("data-id");
+      if (!id) return;
+      selectNode(id);
+      clearSearch();
+    });
+    // Close dropdown when clicking outside.
+    document.addEventListener("click", (ev) => {
+      if (!searchInput.parentElement.contains(ev.target)) {
+        searchResults.removeAttribute("data-open");
+      }
+    });
+    searchInput.addEventListener("focus", () => {
+      if (searchCurrentResults.length) searchResults.setAttribute("data-open", "1");
+    });
+  }
+
+  function loadCardIndex() {
+    return fetch(`/api/cards/${encodeURIComponent(SLUG)}`)
+      .then(r => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(data => {
+        cardIndex = Array.isArray(data) ? data : [];
+        renderDirectory();
+      })
+      .catch(e => {
+        if (directoryPanel) {
+          directoryPanel.innerHTML =
+            `<p class="muted directory-empty">Failed to load directory: ${escapeText(e.message)}</p>`;
+        }
+      });
+  }
+
   function zoomBy(factor) {
     if (!network) return;
     const cur = network.getScale();
@@ -129,9 +380,14 @@
     if (!targetId) return;
     focusNode(targetId);
     loadCard(targetId);
+    const idx = targetId.indexOf(":");
+    if (idx >= 0) setActiveDirectoryRow(targetId.slice(idx + 1));
   });
 
   wireControls();
+  wireSearch();
+  wireDirectory();
+  loadCardIndex();
 
   fetch(`/api/graph/${encodeURIComponent(SLUG)}`)
     .then(r => {
@@ -161,6 +417,8 @@
         if (params.nodes.length === 0) return;
         const id = params.nodes[0];
         loadCard(id);
+        const idx = id.indexOf(":");
+        if (idx >= 0) setActiveDirectoryRow(id.slice(idx + 1));
       });
 
       // Freeze physics once initial layout is stable. The toggle starts checked
@@ -175,6 +433,8 @@
       const first = (data.nodes || [])[0];
       if (first) {
         loadCard(first.id);
+        const idx = first.id.indexOf(":");
+        if (idx >= 0) setActiveDirectoryRow(first.id.slice(idx + 1));
       } else {
         panel.innerHTML = '<p class="muted">This graph has no cards yet.</p>';
       }

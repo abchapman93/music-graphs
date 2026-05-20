@@ -131,7 +131,7 @@ body.graph-page main.container {
 .graph-stage {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(280px, 22vw, 380px);
+  grid-template-columns: 240px minmax(0, 1fr) clamp(280px, 22vw, 380px);
   min-height: 0;
   background: var(--bg);
 }
@@ -142,6 +142,149 @@ body.graph-page main.container {
   min-height: 0;
   background: #fff;
   border-right: 1px solid var(--border);
+}
+
+/* ── Directory panel (left) ─────────────────────────────────────────── */
+#directory-panel {
+  overflow-y: auto;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  min-height: 0;
+  padding: 0.5rem 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+#directory-panel .directory-empty {
+  padding: 0.5rem 0.5rem;
+  font-size: 0.85rem;
+}
+.directory-group {
+  margin-bottom: 2px;
+}
+.directory-group > summary {
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 6px 4px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.directory-group > summary::-webkit-details-marker { display: none; }
+.directory-group > summary::before { content: "▸"; font-size: 9px; flex-shrink: 0; }
+.directory-group[open] > summary::before { content: "▾"; }
+.directory-group > summary:hover { color: var(--fg); }
+.directory-count {
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: auto;
+}
+.directory-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 4px 0;
+}
+.directory-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.directory-row:hover { background: #f0f3f6; }
+.directory-row.active { background: var(--accent); color: #fff; }
+.directory-row .type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.directory-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Search bar above canvas ────────────────────────────────────────── */
+.graph-searchbar {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 6;
+  width: min(360px, 40%);
+}
+.graph-searchbar #search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.graph-searchbar #search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#search-results {
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  overflow-y: auto;
+  max-height: 320px;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+#search-results[data-open="1"] { display: block; }
+.search-result-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover,
+.search-result-item.active { background: #f0f3f6; }
+.search-result-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.search-result-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.search-result-slug {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  flex-shrink: 0;
+}
+.search-result-type {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 
 #graph {

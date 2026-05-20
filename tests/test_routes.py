@@ -80,6 +80,36 @@ def test_api_card_404():
     assert _client().get(f"/api/card/{SLUG}/does-not-exist").status_code == 404
 
 
+def test_api_cards_list_ok():
+    """N/O — shared `/api/cards/<slug>` index used by search + directory."""
+    resp = _client().get(f"/api/cards/{SLUG}")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data, list)
+    assert len(data) >= 5
+    # Each entry has the documented shape.
+    for c in data:
+        assert set(c.keys()) == {"slug", "type", "name", "image_url"}
+    # Known card present.
+    slugs = {c["slug"] for c in data}
+    assert KNOWN_CARD_SLUG in slugs
+    # Sorted by (type, name.lower()).
+    keys = [(c["type"], c["name"].lower()) for c in data]
+    assert keys == sorted(keys)
+
+
+def test_api_cards_list_404():
+    assert _client().get("/api/cards/does-not-exist").status_code == 404
+
+
+def test_graph_view_has_search_and_directory():
+    """N/O — graph page exposes the search input + directory panel."""
+    body = _client().get(f"/graph/{SLUG}").get_data(as_text=True)
+    assert 'id="search-input"' in body
+    assert 'id="search-results"' in body
+    assert 'id="directory-panel"' in body
+
+
 def test_card_view_renders():
     resp = _client().get(f"/graph/{SLUG}/card/{KNOWN_CARD_SLUG}")
     assert resp.status_code == 200

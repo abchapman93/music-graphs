@@ -132,6 +132,34 @@ def api_graph(slug):
     return jsonify(build_graph(gdir))
 
 
+@app.route("/api/cards/<graph_slug>")
+def api_cards(graph_slug):
+    """JSON list of every card in a graph for client-side search + directory.
+
+    Returns ``[{slug, type, name, image_url|null}, ...]`` sorted by
+    ``(type, name.lower())``. Files that fail to parse are skipped.
+    """
+    cards_dir = _graph_dir(graph_slug) / "cards"
+    if not cards_dir.is_dir():
+        abort(404)
+    out: list[dict] = []
+    for md_path in cards_dir.glob("*.md"):
+        try:
+            card = parse_card(md_path)
+        except (ValueError, Exception):
+            continue
+        fm = card.get("frontmatter") or {}
+        image = fm.get("image") if isinstance(fm, dict) else None
+        out.append({
+            "slug": card["slug"],
+            "type": card["type"],
+            "name": card["name"],
+            "image_url": image,
+        })
+    out.sort(key=lambda c: (c["type"], c["name"].lower()))
+    return jsonify(out)
+
+
 @app.route("/api/card/<graph_slug>/<card_slug>")
 def api_card(graph_slug, card_slug):
     path = _find_card_path(graph_slug, card_slug)

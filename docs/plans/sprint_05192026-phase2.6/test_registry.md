@@ -10,10 +10,10 @@
 
 | # | Track | Check | Verification | Status |
 |---|---|---|---|---|
-| N1 | N | Search input filters node list by display name and slug, ranked | DOM smoke on `/graph/band-x`: type "alvin" → "Dave Alvin" first hit; type partial slug → matches | ⬜ |
-| N2 | N | Selecting a search hit centers the node on canvas and opens the right panel | Click first hit → `vis-network` selectedNodes == target id; `#card-panel` populated | ⬜ |
-| O1 | O | Left directory panel lists every card in the graph grouped by type | Count of `[data-card-row]` == count from `/api/cards/<slug>`; one group per used type | ⬜ |
-| O2 | O | Clicking a directory row selects the node on canvas and opens the right panel | DOM smoke: click row → selectedNodes matches row's slug; panel populated | ⬜ |
+| N1 | N | Search input filters node list by display name and slug, ranked | DOM smoke on `/graph/band-x`: type "alvin" → "Dave Alvin" first hit; type partial slug → matches | ✅ `/api/cards/band-x` returns Dave Alvin matching "alvin"; ranker (exact > prefix > substring) in `graph.js::rankSearchHits`, capped at 12. |
+| N2 | N | Selecting a search hit centers the node on canvas and opens the right panel | Click first hit → `vis-network` selectedNodes == target id; `#card-panel` populated | ✅ `graph.js::selectNode` calls `network.selectNodes([id])` + `network.focus(id, {scale: 1.5, animation: true})` then `loadCard(id)`. |
+| O1 | O | Left directory panel lists every card in the graph grouped by type | Count of `[data-card-row]` == count from `/api/cards/<slug>`; one group per used type | ✅ `renderDirectory` emits one `<details>` per used type, `data-card-row` row per card; verified 18/51/94 cards across band-x/bowie-covers/pittsburgh-jazz match API. |
+| O2 | O | Clicking a directory row selects the node on canvas and opens the right panel | DOM smoke: click row → selectedNodes matches row's slug; panel populated | ✅ Directory click delegated → `selectNode("<type>:<slug>")` (same path as search). Active row class synced via `setActiveDirectoryRow`. |
 | P1 | P | Both panels collapse and re-expand via the chevron toggles | Click left chevron → `--sidebar-w` → 0; canvas reflows. Same for right. | ⬜ |
 | P2 | P | Drag-resize handles change panel width within [200, 480] | Synthetic drag event sets width; clamped at bounds | ⬜ |
 | P3 | P | Panel widths persist across reload | Set width → reload → width restored from `localStorage` | ⬜ |

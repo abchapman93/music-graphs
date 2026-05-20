@@ -10,7 +10,15 @@
     {% if description %}<p class="muted">{{ description }}</p>{% endif %}
   </header>
   <div class="graph-stage">
+    <aside id="directory-panel" aria-label="Card directory">
+      <p class="muted directory-empty">Loading…</p>
+    </aside>
     <div class="graph-canvas-wrap">
+      <div class="graph-searchbar">
+        <input id="search-input" type="search" autocomplete="off"
+               placeholder="Search nodes…" aria-label="Search nodes">
+        <div id="search-results" role="listbox" aria-label="Search results"></div>
+      </div>
       <div id="graph"></div>
       <div class="graph-controls" role="toolbar" aria-label="Graph controls">
         <button id="zoom-in" type="button" class="gc-btn" aria-label="Zoom in" title="Zoom in">+</button>
