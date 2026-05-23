@@ -2,6 +2,7 @@
 name: "Brad Mehldau Covers"
 description: "Brad Mehldau's recordings of rock, pop, and folk songs — Beatles, Radiohead, Nirvana, Elliott Smith, Nick Drake, and others — alongside the original songs and artists he reinterprets."
 cover_image: "images/brad-mehldau.jpg"
+spotify_playlist_url: "https://open.spotify.com/playlist/4M95XD3NMXzkVpqxaiVPgI"
 resources:
   - type: wikipedia-page
     url: https://en.wikipedia.org/wiki/Brad_Mehldau_discography

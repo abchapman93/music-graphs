@@ -102,6 +102,7 @@ def list_graphs(graphs_root: Path) -> list[dict]:
         name = slug
         description = ""
         cover_image = None
+        spotify_playlist_url = None
 
         readme = child / "README.md"
         if readme.is_file():
@@ -111,6 +112,9 @@ def list_graphs(graphs_root: Path) -> list[dict]:
                 name = str(fm.get("name") or slug)
                 description = str(fm.get("description") or "")
                 cover_image = fm.get("cover_image") or None
+                raw_playlist = fm.get("spotify_playlist_url")
+                if isinstance(raw_playlist, str) and raw_playlist.strip():
+                    spotify_playlist_url = raw_playlist.strip()
             except Exception as e:
                 logger.debug("Failed to parse README for %s: %s", slug, e)
 
@@ -121,6 +125,7 @@ def list_graphs(graphs_root: Path) -> list[dict]:
             "name": name,
             "description": description,
             "cover_image": cover_image,
+            "spotify_playlist_url": spotify_playlist_url,
             "card_count": card_count,
         })
 

@@ -2,6 +2,7 @@
 name: "Pittsburgh Jazz"
 description: "Mid-20th-century jazz musicians who came out of Pittsburgh — pianists, saxophonists, bassists, and drummers shaped by the Hill District scene."
 cover_image: "images/erroll-garner-1947.jpg"
+spotify_playlist_url: "https://open.spotify.com/playlist/7aU5CsFWdDnvcSfEXJfjZc"
 resources:
   - type: wikipedia-category
     url: https://en.wikipedia.org/wiki/Category:Jazz_musicians_from_Pittsburgh

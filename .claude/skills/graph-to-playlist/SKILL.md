@@ -100,7 +100,7 @@ Invoke the MCP tool with `prompt=<prompt>` and `language="en"`. Surface the tool
 
 If the prompt is too long or contains too many tracks, the skill MAY split into multiple playlists named `<name> (Part 1)`, `<name> (Part 2)`, etc., and submit each. Confirm with the user before splitting.
 
-### Step 7 — Write the sidecar verification file
+### Step 7 — Write the sidecar verification file and update the README
 
 Write `graphs/<graph>/playlist.md` (overwriting any prior copy) with frontmatter:
 
@@ -120,6 +120,14 @@ spotify_playlist_url: <url-from-mcp-response-if-present>
 - Manually add any tracks the NL creator missed (paste URIs into the Spotify search bar inside the playlist).
 
 This sidecar is **not** required to be lint-clean — it is metadata, not a card. The lint rule `graphs/<slug>/cards/*.md` only governs files under `cards/`.
+
+Then, **update the graph's README** at `graphs/<graph>/README.md` so the new playlist becomes the canonical one for the graph viewer:
+
+- Set the frontmatter key `spotify_playlist_url:` to the new playlist URL (add the key if missing; overwrite if present).
+- Leave all other frontmatter unchanged.
+- Do NOT touch the README body.
+
+The graph viewer reads this key and auto-loads the playlist into the persistent player on graph load. Always prompt the user before overwriting an existing `spotify_playlist_url` — the user may want to keep the prior canonical playlist and just keep the new one as a side artifact.
 
 ## Output
 

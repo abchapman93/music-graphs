@@ -91,6 +91,8 @@
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 <script>
   window.GRAPH_SLUG = "{{ slug }}";
+  window.GRAPH_SPOTIFY_PLAYLIST_URL = {{ (spotify_playlist_url or "")|tojson }};
+  window.GRAPH_NAME = {{ name|tojson }};
 </script>
 <script src="/static/js/graph.js"></script>
 {% endblock %}

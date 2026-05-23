@@ -136,6 +136,7 @@ def graph_view(slug):
         slug=slug,
         name=g["name"],
         description=g["description"],
+        spotify_playlist_url=g.get("spotify_playlist_url"),
     )
 
 

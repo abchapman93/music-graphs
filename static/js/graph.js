@@ -80,6 +80,14 @@
     return `spotify:${m[1]}:${m[2]}`;
   }
 
+  function spotifyUrlToUri(url) {
+    // https://open.spotify.com/<kind>/<id>[/?...] → spotify:<kind>:<id>
+    if (!url) return null;
+    const m = String(url).match(/open\.spotify\.com\/(?:embed\/)?([a-z]+)\/([A-Za-z0-9]+)/);
+    if (!m) return null;
+    return `spotify:${m[1]}:${m[2]}`;
+  }
+
   function playInPersistentPlayer(uri, label) {
     if (!uri) return;
     currentPlayerUri = uri;
@@ -95,12 +103,27 @@
     }
   }
 
+  // Auto-load the graph's canonical playlist (if any) into the persistent
+  // player on first init, so navigating to a graph starts music by default.
+  // Browser autoplay policies may still require user interaction to actually
+  // begin playback — we call play() but the iframe decides whether to honor.
+  const canonicalPlaylistUrl = (window.GRAPH_SPOTIFY_PLAYLIST_URL || "").trim();
+  const canonicalPlaylistUri = canonicalPlaylistUrl
+    ? spotifyUrlToUri(canonicalPlaylistUrl)
+    : null;
+  if (canonicalPlaylistUri) {
+    const label = `${window.GRAPH_NAME || "Graph"} — canonical playlist`;
+    playInPersistentPlayer(canonicalPlaylistUri, label);
+  }
+
   window.onSpotifyIframeApiReady = function (IFrameAPI) {
     if (!playerEmbedMount) return;
-    const opts = { width: "100%", height: 80, uri: "" };
+    const initialUri = canonicalPlaylistUri || "";
+    const opts = { width: "100%", height: 80, uri: initialUri };
     IFrameAPI.createController(playerEmbedMount, opts, (controller) => {
       spotifyController = controller;
-      // Drain any URIs queued before the controller was ready.
+      // Drain any URIs queued before the controller was ready. The last URI
+      // wins (latest user click or the canonical playlist if nothing else).
       if (spotifyControllerPending.length) {
         const last = spotifyControllerPending[spotifyControllerPending.length - 1];
         spotifyControllerPending = [];
