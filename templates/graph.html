@@ -9,6 +9,15 @@
     <h2>{{ name }}</h2>
     {% if description %}<p class="muted">{{ description }}</p>{% endif %}
   </header>
+  <div id="persistent-player" class="persistent-player" hidden aria-label="Now playing">
+    <div class="persistent-player-meta">
+      <span class="persistent-player-label">Now playing</span>
+      <span class="persistent-player-title" id="persistent-player-title"></span>
+    </div>
+    <div class="persistent-player-frame">
+      <div id="persistent-player-embed"></div>
+    </div>
+  </div>
   <div class="graph-stage" id="graph-stage">
     <aside id="directory-panel" aria-label="Card directory">
       <div class="panel-content" id="directory-panel-content">
@@ -79,6 +88,7 @@
 </div>
 
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 <script>
   window.GRAPH_SLUG = "{{ slug }}";
 </script>

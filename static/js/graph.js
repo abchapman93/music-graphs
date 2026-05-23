@@ -62,6 +62,56 @@
 
   let network = null;
 
+  // ── Persistent Spotify player ──────────────────────────────────────────
+  // One Spotify iframe lives at the top of the page; per-card UI sends URIs
+  // to it via the Spotify IFrame API so music persists across card clicks.
+  const playerEl = document.getElementById("persistent-player");
+  const playerEmbedMount = document.getElementById("persistent-player-embed");
+  const playerTitleEl = document.getElementById("persistent-player-title");
+  let spotifyController = null;
+  let spotifyControllerPending = []; // queued URIs before controller is ready
+  let currentPlayerUri = null;
+
+  function embedUrlToUri(embedUrl) {
+    // https://open.spotify.com/embed/<kind>/<id> → spotify:<kind>:<id>
+    if (!embedUrl) return null;
+    const m = embedUrl.match(/\/embed\/([a-z]+)\/([A-Za-z0-9]+)/);
+    if (!m) return null;
+    return `spotify:${m[1]}:${m[2]}`;
+  }
+
+  function playInPersistentPlayer(uri, label) {
+    if (!uri) return;
+    currentPlayerUri = uri;
+    if (playerEl) playerEl.hidden = false;
+    if (playerTitleEl) playerTitleEl.textContent = label || "";
+    if (spotifyController) {
+      try {
+        spotifyController.loadUri(uri);
+        spotifyController.play();
+      } catch (_) {}
+    } else {
+      spotifyControllerPending.push(uri);
+    }
+  }
+
+  window.onSpotifyIframeApiReady = function (IFrameAPI) {
+    if (!playerEmbedMount) return;
+    const opts = { width: "100%", height: 80, uri: "" };
+    IFrameAPI.createController(playerEmbedMount, opts, (controller) => {
+      spotifyController = controller;
+      // Drain any URIs queued before the controller was ready.
+      if (spotifyControllerPending.length) {
+        const last = spotifyControllerPending[spotifyControllerPending.length - 1];
+        spotifyControllerPending = [];
+        try {
+          controller.loadUri(last);
+          controller.play();
+        } catch (_) {}
+      }
+    });
+  };
+
   function escapeText(s) {
     if (s == null) return "";
     return String(s)
@@ -109,13 +159,19 @@
     // body_html is server-rendered + sanitized at authoring time (trusted local content).
     parts.push(`<div class="card-body">${card.body_html || ""}</div>`);
     if (card.spotify_embed_url) {
-      const height = isTall ? 352 : 152;
+      const uri = embedUrlToUri(card.spotify_embed_url);
+      const label = `${card.name}${card.type ? " (" + card.type + ")" : ""}`;
       parts.push(
         `<div class="card-spotify">` +
-        `<iframe src="${escapeText(card.spotify_embed_url)}" ` +
-        `data-spotify-kind="${escapeText(card.spotify_kind || "")}" ` +
-        `height="${height}" frameborder="0" allowtransparency="true" allow="encrypted-media">` +
-        `</iframe></div>`
+        `<button type="button" class="card-spotify-play" data-card-play ` +
+        `data-spotify-uri="${escapeText(uri || "")}" ` +
+        `data-spotify-label="${escapeText(label)}" ` +
+        `title="Play in persistent player at top of page">` +
+        `▶ Play in player` +
+        `</button>` +
+        `<a class="card-spotify-link" href="${escapeText(card.spotify_embed_url.replace("/embed/", "/"))}" ` +
+        `target="_blank" rel="noopener" title="Open on Spotify">Open on Spotify ↗</a>` +
+        `</div>`
       );
     }
     panel.innerHTML = parts.join("");
@@ -623,6 +679,14 @@
   }
 
   panel.addEventListener("click", function (ev) {
+    const playBtn = ev.target.closest("[data-card-play]");
+    if (playBtn) {
+      ev.preventDefault();
+      const uri = playBtn.getAttribute("data-spotify-uri");
+      const label = playBtn.getAttribute("data-spotify-label") || "";
+      playInPersistentPlayer(uri, label);
+      return;
+    }
     if (ev.target.closest("[data-card-edit]")) {
       ev.preventDefault();
       enterEditMode();
