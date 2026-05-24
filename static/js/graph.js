@@ -13,18 +13,370 @@
   const searchInput = document.getElementById("search-input");
   const searchResults = document.getElementById("search-results");
 
-  // Type → background color, parallel to GROUPS but in plain CSS form for dots.
+  // Type → background color (Neon Atlas palette, parallel to CSS --type-* tokens).
   const TYPE_COLOR = {
-    person: "#3b82f6",
-    group: "#3b82f6",
-    album: "#22c55e",
-    track: "#16a34a",
-    song: "#86efac",
-    location: "#f59e0b",
-    genre: "#a855f7",
-    note: "#facc15",
-    memory: "#ef4444",
+    person:   "#5dd4ff",
+    group:    "#ff5fb8",
+    album:    "#9bff5f",
+    track:    "#ffd34d",
+    song:     "#c590ff",
+    location: "#ff8a3d",
+    genre:    "#b39dff",
+    note:     "#ffe066",
+    memory:   "#ff5b6e",
   };
+
+  // ── Mini-card SVG node renderer ────────────────────────────────────────
+  // Each node is drawn as a tiny rounded rectangle "card" with a type-colored
+  // cover tile on the left and name + type label on the right. The SVG is
+  // returned as a data URL so vis-network can use it via shape: "image".
+  // Cache keyed by id+state so we don't regenerate on every redraw.
+  const nodeImageCache = new Map();
+
+  function escapeXml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function truncate(s, n) {
+    s = String(s == null ? "" : s);
+    return s.length > n ? s.slice(0, n - 1) + "…" : s;
+  }
+
+  function nodeImage(node, state) {
+    const id = node.id;
+    const cacheKey = `${id}|${state.selected ? 1 : 0}|${state.hovered ? 1 : 0}|${state.pinned ? 1 : 0}`;
+    const cached = nodeImageCache.get(cacheKey);
+    if (cached) return cached;
+
+    const type = node.group || (id.split(":")[0] || "person");
+    const name = node.label || id;
+    const pinned = !!state.pinned;
+    const w = pinned ? 150 : 110;
+    const h = pinned ? 50 : 36;
+    const color = TYPE_COLOR[type] || "#7c5cff";
+    let outline, outlineW;
+    if (state.selected) {
+      outline = color; outlineW = 3;
+    } else if (state.hovered) {
+      outline = "rgba(160,170,220,0.55)"; outlineW = 2;
+    } else {
+      outline = "rgba(120,130,180,0.35)"; outlineW = 1;
+    }
+    const coverSize = h - 6;
+    const labelX = coverSize + 9;
+    const nameSize = pinned ? 13 : 10;
+    const typeSize = pinned ? 9 : 8;
+    const nameY = pinned ? 22 : h * 0.46;
+    const typeY = pinned ? 36 : h * 0.78;
+    const maxChars = pinned ? 18 : 14;
+    const safeName = escapeXml(truncate(name, maxChars));
+    const safeType = escapeXml(type.toUpperCase());
+
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
+      `<rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="8" ry="8" ` +
+        `fill="#0f1124" stroke="${outline}" stroke-width="${outlineW}"/>` +
+      `<rect x="3" y="3" width="${coverSize}" height="${coverSize}" rx="5" ry="5" fill="${color}"/>` +
+      `<text x="${labelX}" y="${nameY}" fill="#f0f1ff" ` +
+        `font-family="Inter, Helvetica Neue, sans-serif" font-size="${nameSize}" font-weight="600">${safeName}</text>` +
+      `<text x="${labelX}" y="${typeY}" fill="rgba(220,225,255,0.62)" ` +
+        `font-family="JetBrains Mono, monospace" font-size="${typeSize}" letter-spacing="0.6">${safeType}</text>` +
+      `</svg>`;
+
+    const dataUrl = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    nodeImageCache.set(cacheKey, dataUrl);
+    return dataUrl;
+  }
+
+  // Track which node is the "subject" (largest mini-card) and per-node state.
+  let pinnedNodeId = null;
+  const hoveredById = new Set();
+  const selectedById = new Set();
+  // Cached node sizes so we can compute outgoing edge endpoints on the rect.
+  const nodeSize = new Map(); // id → { w, h }
+
+  function applyNodeImage(id) {
+    if (!network) return;
+    const data = network.body.data.nodes.get(id);
+    if (!data) return;
+    const state = {
+      selected: selectedById.has(id),
+      hovered: hoveredById.has(id),
+      pinned: id === pinnedNodeId,
+    };
+    const img = nodeImage(data, state);
+    const { w, h } = imageDims(state.pinned);
+    nodeSize.set(id, { w, h });
+    network.body.data.nodes.update({ id, image: img, shape: "image", size: Math.max(w, h) / 2 });
+  }
+
+  function imageDims(pinned) {
+    return pinned ? { w: 150, h: 50 } : { w: 110, h: 36 };
+  }
+
+  // ── Focus / hover dim ──────────────────────────────────────────────────
+  // Two pieces of state, with hover taking precedence:
+  //   focusedNodeId: persists across mouse-outs; set by clicking a node or
+  //     selecting one via search/directory. Cleared by clicking empty canvas.
+  //   hoveredFocusId: live mouse-hover; reverts to the focused node on blur.
+  // The "effective focus" used to dim non-neighbors is hovered || focused.
+  let focusedFocusId = null;
+  let hoveredFocusId = null;
+  const adjacency = new Map();
+  function buildAdjacency(edges) {
+    adjacency.clear();
+    for (const e of edges) {
+      if (!adjacency.has(e.from)) adjacency.set(e.from, new Set());
+      if (!adjacency.has(e.to))   adjacency.set(e.to,   new Set());
+      adjacency.get(e.from).add(e.to);
+      adjacency.get(e.to).add(e.from);
+    }
+  }
+  function effectiveFocus() {
+    return hoveredFocusId != null ? hoveredFocusId : focusedFocusId;
+  }
+  function applyFocusDim() {
+    if (!network) return;
+    const id = effectiveFocus();
+    const updates = [];
+    if (id == null) {
+      network.body.data.nodes.forEach(n => updates.push({ id: n.id, opacity: 1 }));
+    } else {
+      const neighbors = adjacency.get(id) || new Set();
+      network.body.data.nodes.forEach(n => {
+        const keep = n.id === id || neighbors.has(n.id);
+        updates.push({ id: n.id, opacity: keep ? 1 : 0.32 });
+      });
+    }
+    network.body.data.nodes.update(updates);
+    // Edge overlay reads the same effective focus from hoveredNodeForEdges.
+    hoveredNodeForEdges = id;
+    scheduleEdgeRedraw();
+  }
+
+  function refreshAllNodeImages() {
+    if (!network) return;
+    const ids = network.body.data.nodes.getIds();
+    ids.forEach(applyNodeImage);
+  }
+
+  // ── Edge overlay (gradient + glow) ─────────────────────────────────────
+  // vis-network's edge rendering doesn't support gradient strokes; we draw
+  // them ourselves in an absolutely-positioned SVG layer over the canvas.
+  // Redrawn on every vis-network "afterDrawing" tick using getPositions +
+  // canvasToDOM for screen-space coords.
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  let edgeOverlay = null;        // <svg> element
+  let edgeDefs = null;           // <defs> child for linearGradients
+  let edgeGlowLayer = null;      // <g> (glow strokes — blurred by CSS filter)
+  let edgeMainLayer = null;      // <g> (sharp strokes on top)
+  const edgeNeighborMap = new Map(); // nodeId → Set(edgeIndex)
+  let edgeListCached = [];
+  let hoveredNodeForEdges = null;
+  // Persistent SVG element refs — built once per edge, mutated per frame so
+  // we never reparse innerHTML in the hot path.
+  let edgeEls = []; // [{ grad, glow, main }, …] index-aligned with edgeListCached
+  let edgeRedrawPending = false;
+
+  function ensureEdgeOverlay() {
+    if (edgeOverlay) return edgeOverlay;
+    const wrap = graphMount;
+    if (!wrap) return null;
+    edgeOverlay = document.createElementNS(SVG_NS, "svg");
+    edgeOverlay.setAttribute("class", "edge-overlay");
+    Object.assign(edgeOverlay.style, {
+      position: "absolute",
+      top: "0", left: "0",
+      width: "100%", height: "100%",
+      pointerEvents: "none",
+      zIndex: "1",
+    });
+    const cs = window.getComputedStyle(wrap);
+    if (cs.position === "static") wrap.style.position = "relative";
+    edgeDefs = document.createElementNS(SVG_NS, "defs");
+    edgeGlowLayer = document.createElementNS(SVG_NS, "g");
+    edgeMainLayer = document.createElementNS(SVG_NS, "g");
+    // CSS blur is GPU-accelerated and applied once to the whole layer,
+    // rather than a per-path SVG <filter> reapplied to each of 384 strokes.
+    edgeGlowLayer.style.filter = "blur(4px)";
+    edgeOverlay.appendChild(edgeDefs);
+    edgeOverlay.appendChild(edgeGlowLayer);
+    edgeOverlay.appendChild(edgeMainLayer);
+    wrap.appendChild(edgeOverlay);
+    return edgeOverlay;
+  }
+
+  // Build persistent SVG elements for each edge once. Later frames just
+  // mutate attributes (no innerHTML, no reparsing, no DOM churn).
+  function rebuildEdgeDom() {
+    if (!edgeOverlay) return;
+    while (edgeDefs.firstChild) edgeDefs.removeChild(edgeDefs.firstChild);
+    while (edgeGlowLayer.firstChild) edgeGlowLayer.removeChild(edgeGlowLayer.firstChild);
+    while (edgeMainLayer.firstChild) edgeMainLayer.removeChild(edgeMainLayer.firstChild);
+    edgeEls = new Array(edgeListCached.length);
+    for (let i = 0; i < edgeListCached.length; i++) {
+      const grad = document.createElementNS(SVG_NS, "linearGradient");
+      grad.setAttribute("id", "eo-g-" + i);
+      grad.setAttribute("gradientUnits", "userSpaceOnUse");
+      const s0 = document.createElementNS(SVG_NS, "stop");
+      s0.setAttribute("offset", "0%");
+      const s1 = document.createElementNS(SVG_NS, "stop");
+      s1.setAttribute("offset", "100%");
+      grad.appendChild(s0); grad.appendChild(s1);
+      edgeDefs.appendChild(grad);
+
+      const glow = document.createElementNS(SVG_NS, "path");
+      glow.setAttribute("fill", "none");
+      glow.setAttribute("stroke", "url(#eo-g-" + i + ")");
+      glow.setAttribute("stroke-width", "6");
+      glow.setAttribute("stroke-linecap", "round");
+      edgeGlowLayer.appendChild(glow);
+
+      const main = document.createElementNS(SVG_NS, "path");
+      main.setAttribute("fill", "none");
+      main.setAttribute("stroke", "url(#eo-g-" + i + ")");
+      main.setAttribute("stroke-linecap", "round");
+      edgeMainLayer.appendChild(main);
+
+      edgeEls[i] = { grad, s0, s1, glow, main };
+    }
+  }
+
+  // Compute the intersection of the segment center→external with the rect of
+  // half-width hw and half-height hh centered at (0,0). Returns the offset
+  // from the rect center to the intersection point.
+  function rectEdgeOffset(dx, dy, hw, hh) {
+    if (dx === 0 && dy === 0) return { x: 0, y: 0 };
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    const sx = adx === 0 ? Infinity : hw / adx;
+    const sy = ady === 0 ? Infinity : hh / ady;
+    const s = Math.min(sx, sy);
+    return { x: dx * s, y: dy * s };
+  }
+
+  function typeOfId(id) {
+    const n = network && network.body.data.nodes.get(id);
+    return (n && n.group) || (id.split(":")[0] || "person");
+  }
+
+  function buildEdgeIndex(edges) {
+    edgeListCached = edges;
+    edgeNeighborMap.clear();
+    edges.forEach((e, i) => {
+      let s = edgeNeighborMap.get(e.from);
+      if (!s) { s = new Set(); edgeNeighborMap.set(e.from, s); }
+      s.add(i);
+      s = edgeNeighborMap.get(e.to);
+      if (!s) { s = new Set(); edgeNeighborMap.set(e.to, s); }
+      s.add(i);
+    });
+    rebuildEdgeDom();
+  }
+
+  // Coalesce many afterDrawing events per animation frame into a single paint.
+  function scheduleEdgeRedraw() {
+    if (edgeRedrawPending) return;
+    edgeRedrawPending = true;
+    requestAnimationFrame(() => {
+      edgeRedrawPending = false;
+      redrawEdgeOverlay();
+    });
+  }
+
+  // Per-edge cached stroke colors (only recompute when edge list changes).
+  let edgeColorsCached = []; // [{ ca, cb }]
+  function recomputeEdgeColors() {
+    edgeColorsCached = edgeListCached.map(e => ({
+      ca: TYPE_COLOR[typeOfId(e.from)] || "#7c5cff",
+      cb: TYPE_COLOR[typeOfId(e.to)]   || "#7c5cff",
+    }));
+  }
+
+  function redrawEdgeOverlay() {
+    if (!network || !edgeOverlay) return;
+    const n = edgeListCached.length;
+    if (!n) return;
+    if (edgeColorsCached.length !== n) recomputeEdgeColors();
+
+    const rect = graphMount.getBoundingClientRect();
+    edgeOverlay.setAttribute("viewBox", "0 0 " + rect.width + " " + rect.height);
+
+    const ids = network.body.data.nodes.getIds();
+    const canvasPos = network.getPositions(ids);
+    const scale = network.getScale();
+
+    // Project all nodes to DOM coords up front (avoid the per-edge map lookup).
+    const domPos = Object.create(null);
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const p = canvasPos[id];
+      if (p) domPos[id] = network.canvasToDOM(p);
+    }
+
+    const hi = hoveredNodeForEdges;
+    const hiEdges = hi != null ? edgeNeighborMap.get(hi) : null;
+
+    for (let i = 0; i < n; i++) {
+      const e = edgeListCached[i];
+      const els = edgeEls[i];
+      if (!els) continue;
+      const a = domPos[e.from], b = domPos[e.to];
+      if (!a || !b) {
+        els.glow.style.display = "none";
+        els.main.style.display = "none";
+        continue;
+      }
+      const sizeA = nodeSize.get(e.from) || { w: 110, h: 36 };
+      const sizeB = nodeSize.get(e.to)   || { w: 110, h: 36 };
+      const dx = b.x - a.x, dy = b.y - a.y;
+      if (dx === 0 && dy === 0) {
+        els.glow.style.display = "none";
+        els.main.style.display = "none";
+        continue;
+      }
+      els.glow.style.display = "";
+      els.main.style.display = "";
+
+      const offA = rectEdgeOffset(dx, dy, (sizeA.w * scale) / 2, (sizeA.h * scale) / 2);
+      const offB = rectEdgeOffset(-dx, -dy, (sizeB.w * scale) / 2, (sizeB.h * scale) / 2);
+      const x1 = a.x + offA.x, y1 = a.y + offA.y;
+      const x2 = b.x + offB.x, y2 = b.y + offB.y;
+      const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+      const px = -(y2 - y1) / len, py = (x2 - x1) / len;
+      const bend = len * 0.12 < 28 ? len * 0.12 : 28;
+      const cx = (x1 + x2) / 2 + px * bend;
+      const cy = (y1 + y2) / 2 + py * bend;
+
+      const colors = edgeColorsCached[i];
+      els.grad.setAttribute("x1", x1);
+      els.grad.setAttribute("y1", y1);
+      els.grad.setAttribute("x2", x2);
+      els.grad.setAttribute("y2", y2);
+      els.s0.setAttribute("stop-color", colors.ca);
+      els.s1.setAttribute("stop-color", colors.cb);
+
+      let glowOpacity = 0.25, mainOpacity = 0.55, mainWidth = 1.4;
+      if (hi != null) {
+        if (hiEdges && hiEdges.has(i)) {
+          glowOpacity = 0.55; mainOpacity = 1.0; mainWidth = 2.5;
+        } else {
+          glowOpacity = 0.05; mainOpacity = 0.12; mainWidth = 1.0;
+        }
+      }
+
+      const d = "M" + x1 + " " + y1 + " Q" + cx + " " + cy + " " + x2 + " " + y2;
+      els.glow.setAttribute("d", d);
+      els.glow.setAttribute("opacity", glowOpacity);
+      els.main.setAttribute("d", d);
+      els.main.setAttribute("opacity", mainOpacity);
+      els.main.setAttribute("stroke-width", mainWidth);
+    }
+  }
 
   // Directory render order (anything else falls to the end alphabetically).
   const DIRECTORY_TYPE_ORDER = [
@@ -237,6 +589,13 @@
         network.selectNodes([typeAndSlug]);
         network.focus(typeAndSlug, { scale: 1.5, animation: true });
       } catch (_) {}
+      const prev = Array.from(selectedById);
+      selectedById.clear();
+      selectedById.add(typeAndSlug);
+      prev.forEach(applyNodeImage);
+      applyNodeImage(typeAndSlug);
+      focusedFocusId = typeAndSlug;
+      applyFocusDim();
     }
     loadCard(typeAndSlug);
     // Sync directory active state.
@@ -461,19 +820,83 @@
     network.fit({ animation: { duration: 200 } });
   }
 
+  // ── Spacing slider ───────────────────────────────────────────────────
+  const SPACING_KEY = "mg-spacing";
+  const SPACING_DEFAULT = 1.0;
+  function loadSpacing() {
+    try {
+      const v = parseFloat(localStorage.getItem(SPACING_KEY));
+      if (Number.isFinite(v) && v >= 0.6 && v <= 2.0) return v;
+    } catch (_) {}
+    return SPACING_DEFAULT;
+  }
+  function saveSpacing(v) {
+    try { localStorage.setItem(SPACING_KEY, String(v)); } catch (_) {}
+  }
+  let currentSpacing = loadSpacing();
+
+  // Briefly unfreeze, let the layout settle, then re-sync to the freeze
+  // checkbox. Uses a timeout because `stabilizationIterationsDone` is tied to
+  // the initial stabilization phase and doesn't reliably fire on later
+  // physics runs triggered via setOptions.
+  let reheatTimer = null;
+  function reheatPhysics() {
+    if (!network) return;
+    network.setOptions({ physics: { enabled: true } });
+    if (reheatTimer) clearTimeout(reheatTimer);
+    reheatTimer = setTimeout(() => {
+      reheatTimer = null;
+      const freeze = document.getElementById("freeze-toggle");
+      const shouldFreeze = !!(freeze && freeze.checked);
+      if (shouldFreeze && network) network.setOptions({ physics: { enabled: false } });
+    }, 1500);
+  }
+
+  function applySpacing(spacing, { reheat = true } = {}) {
+    if (!network) return;
+    network.setOptions({
+      physics: {
+        forceAtlas2Based: {
+          springLength: 120 * spacing,
+          gravitationalConstant: -50 * spacing,
+        },
+      },
+    });
+    if (reheat) reheatPhysics();
+  }
+
   function wireControls() {
     const zin = document.getElementById("zoom-in");
     const zout = document.getElementById("zoom-out");
     const zfit = document.getElementById("zoom-fit");
+    const relayout = document.getElementById("relayout");
     const freeze = document.getElementById("freeze-toggle");
+    const spacingInput = document.getElementById("spacing-slider");
+    const spacingValue = document.getElementById("spacing-value");
     if (zin) zin.addEventListener("click", () => zoomBy(ZOOM_STEP));
     if (zout) zout.addEventListener("click", () => zoomBy(1 / ZOOM_STEP));
     if (zfit) zfit.addEventListener("click", fitView);
+    if (relayout) {
+      relayout.addEventListener("click", reheatPhysics);
+    }
     if (freeze) {
       freeze.addEventListener("change", () => {
         if (!network) return;
-        // checkbox checked == "Frozen" (physics disabled)
         network.setOptions({ physics: { enabled: !freeze.checked } });
+      });
+    }
+    if (spacingInput) {
+      spacingInput.value = String(currentSpacing);
+      if (spacingValue) spacingValue.textContent = currentSpacing.toFixed(2) + "×";
+      // Live preview during drag (no reheat for every step), reheat on change.
+      spacingInput.addEventListener("input", () => {
+        currentSpacing = parseFloat(spacingInput.value);
+        if (spacingValue) spacingValue.textContent = currentSpacing.toFixed(2) + "×";
+      });
+      spacingInput.addEventListener("change", () => {
+        currentSpacing = parseFloat(spacingInput.value);
+        saveSpacing(currentSpacing);
+        applySpacing(currentSpacing, { reheat: true });
       });
     }
   }
@@ -672,9 +1095,24 @@
       })
       .then(data => {
         if (!network) return;
-        const nodes = new vis.DataSet(data.nodes || []);
+        const styled = (data.nodes || []).map(n => {
+          const state = { selected: false, hovered: false, pinned: n.id === pinnedNodeId };
+          const img = nodeImage(n, state);
+          const { w, h } = imageDims(state.pinned);
+          nodeSize.set(n.id, { w, h });
+          return Object.assign({}, n, {
+            shape: "image",
+            image: img,
+            size: Math.max(w, h) / 2,
+            font: { color: "rgba(0,0,0,0)", size: 0 },
+          });
+        });
+        const nodes = new vis.DataSet(styled);
         const edges = new vis.DataSet(data.edges || []);
         network.setData({ nodes: nodes, edges: edges });
+        buildEdgeIndex(data.edges || []);
+        buildAdjacency(data.edges || []);
+        scheduleEdgeRedraw();
       })
       .catch(() => {});
   }
@@ -874,31 +1312,112 @@
       return r.json();
     })
     .then(data => {
-      const nodes = new vis.DataSet(data.nodes || []);
+      // Choose the highest-degree node as the "subject" (pinned, larger card).
+      const deg = new Map();
+      for (const e of (data.edges || [])) {
+        deg.set(e.from, (deg.get(e.from) || 0) + 1);
+        deg.set(e.to,   (deg.get(e.to)   || 0) + 1);
+      }
+      let hubId = null, hubDeg = -1;
+      for (const n of (data.nodes || [])) {
+        const d = deg.get(n.id) || 0;
+        if (d > hubDeg) { hubDeg = d; hubId = n.id; }
+      }
+      pinnedNodeId = hubId;
+
+      // Pre-render each node as a mini-card image. Hide vis-network's label.
+      const styledNodes = (data.nodes || []).map(n => {
+        const state = { selected: false, hovered: false, pinned: n.id === pinnedNodeId };
+        const img = nodeImage(n, state);
+        const { w, h } = imageDims(state.pinned);
+        nodeSize.set(n.id, { w, h });
+        return Object.assign({}, n, {
+          shape: "image",
+          image: img,
+          size: Math.max(w, h) / 2,
+          font: { color: "rgba(0,0,0,0)", size: 0 },
+        });
+      });
+
+      const nodes = new vis.DataSet(styledNodes);
       const edges = new vis.DataSet(data.edges || []);
       network = new vis.Network(
         graphMount,
         { nodes: nodes, edges: edges },
         {
-          groups: GROUPS,
-          nodes: { font: { size: 13, color: "#1a1a1a" }, size: 16 },
-          edges: { color: { color: "#9ca3af" }, smooth: { type: "dynamic" } },
+          nodes: {
+            shape: "image",
+            // Use the SVG's natural width/height so 110×36 mini-cards don't
+            // get stretched into a 110×110 square footprint.
+            shapeProperties: { useImageSize: true, useBorderWithImage: false },
+          },
+          // Edge color is intentionally transparent — gradient/glow edges are
+          // drawn by the overlay SVG via on("afterDrawing", …).
+          edges: {
+            color: { color: "rgba(0,0,0,0)", hover: "rgba(0,0,0,0)", inherit: false },
+            width: 0,
+            smooth: { type: "continuous" },
+          },
           physics: {
             enabled: true,  // run once to lay out, then freeze after stabilization
             solver: "forceAtlas2Based",
-            forceAtlas2Based: { gravitationalConstant: -50, springLength: 120, avoidOverlap: 0.5 },
+            forceAtlas2Based: {
+              gravitationalConstant: -50 * currentSpacing,
+              springLength: 120 * currentSpacing,
+              avoidOverlap: 0.5,
+            },
             stabilization: { iterations: 200 },
           },
-          interaction: { hover: true, tooltipDelay: 200, dragNodes: true },
+          interaction: {
+            hover: true,
+            tooltipDelay: 200,
+            dragNodes: true,
+            zoomView: true,
+            dragView: true,
+          },
         }
       );
       network.on("click", params => {
-        if (params.nodes.length === 0) return;
+        if (params.nodes.length === 0) {
+          // Clicking empty canvas clears selection AND persistent focus.
+          const prev = Array.from(selectedById);
+          selectedById.clear();
+          prev.forEach(applyNodeImage);
+          focusedFocusId = null;
+          applyFocusDim();
+          return;
+        }
         const id = params.nodes[0];
+        const prev = Array.from(selectedById);
+        selectedById.clear();
+        selectedById.add(id);
+        prev.forEach(applyNodeImage);
+        applyNodeImage(id);
+        focusedFocusId = id;
+        applyFocusDim();
         loadCard(id);
         const idx = id.indexOf(":");
         if (idx >= 0) setActiveDirectoryRow(id.slice(idx + 1));
       });
+      network.on("hoverNode", params => {
+        hoveredById.add(params.node);
+        applyNodeImage(params.node);
+        hoveredFocusId = params.node;
+        applyFocusDim();
+      });
+      network.on("blurNode", params => {
+        hoveredById.delete(params.node);
+        applyNodeImage(params.node);
+        if (hoveredFocusId === params.node) hoveredFocusId = null;
+        applyFocusDim();
+      });
+
+      // Edge overlay — gradient/glow strokes drawn over the canvas every frame.
+      ensureEdgeOverlay();
+      buildEdgeIndex(data.edges || []);
+      buildAdjacency(data.edges || []);
+      network.on("afterDrawing", scheduleEdgeRedraw);
+      window.addEventListener("resize", scheduleEdgeRedraw);
 
       // Freeze physics once initial layout is stable. The toggle starts checked
       // (Frozen); the user clicks it to release physics.

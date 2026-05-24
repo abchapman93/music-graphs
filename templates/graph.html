@@ -40,6 +40,15 @@
         <button id="zoom-in" type="button" class="gc-btn" aria-label="Zoom in" title="Zoom in">+</button>
         <button id="zoom-out" type="button" class="gc-btn" aria-label="Zoom out" title="Zoom out">−</button>
         <button id="zoom-fit" type="button" class="gc-btn" aria-label="Fit to screen" title="Fit to screen">⤢</button>
+        <span class="gc-divider" aria-hidden="true"></span>
+        <button id="relayout" type="button" class="gc-btn" aria-label="Re-run layout" title="Re-run layout">⟳</button>
+        <span class="gc-divider" aria-hidden="true"></span>
+        <label class="gc-spacing" title="Node spacing">
+          <span class="gc-spacing-icon" aria-hidden="true">↔</span>
+          <input type="range" id="spacing-slider" min="0.6" max="2.0" step="0.05" value="1.0">
+          <span class="gc-spacing-value" id="spacing-value">1.00×</span>
+        </label>
+        <span class="gc-divider" aria-hidden="true"></span>
         <label class="gc-toggle" title="Pause physics simulation">
           <input type="checkbox" id="freeze-toggle" checked>
           <span>Frozen</span>

@@ -1,0 +1,366 @@
+/* ─────────────────────────────────────────────────────────────────────
+   neon-atlas.css — drop-in token + override layer for the music-graphs
+   Flask app to apply the "Neon Atlas" direction.
+
+   Usage:
+     <link rel="stylesheet" href="/static/css/style.css">
+     <link rel="stylesheet" href="/static/css/neon-atlas.css">
+                          ^ this comes LAST so its tokens override style.css
+
+   This file ONLY restyles. It does NOT change the vis-network node/edge
+   rendering — for that, see graph.js patches in the README.
+   ───────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* ── Surface ─────────────────────────────────────────────────────── */
+  --fg: #f0f1ff;
+  --muted: rgba(220,225,255,0.62);
+  --bg: #0a0a14;
+  --card-bg: #0f1124;
+  --border: rgba(120,130,180,0.18);
+  --accent: #7c5cff;
+
+  /* ── Neon Atlas type-color tokens ───────────────────────────────── */
+  --type-person: #5dd4ff;
+  --type-group:  #ff5fb8;
+  --type-album:  #9bff5f;
+  --type-track:  #ffd34d;
+  --type-song:   #c590ff;
+  --type-location: #ff8a3d;
+  --type-genre:    #b39dff;
+  --type-note:     #ffe066;
+  --type-memory:   #ff5b6e;
+
+  /* ── Surfaces (additional) ──────────────────────────────────────── */
+  --surface-alt: #171a30;
+  --border-strong: rgba(160,170,220,0.35);
+  --fg-dim: rgba(200,210,240,0.42);
+
+  /* ── Type system ────────────────────────────────────────────────── */
+  --font-head: 'Space Grotesk', 'Helvetica Neue', sans-serif;
+  --font-body: 'Inter', 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Body uses the radial midnight gradient. */
+body {
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse at 30% 20%, #14182b 0%, #07070f 65%, #050509 100%);
+  color: var(--fg);
+}
+
+/* Site header — translucent over the midnight backdrop. */
+.site-header {
+  background: rgba(15,17,36,0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.site-title { font-family: var(--font-head); font-weight: 700; }
+.site-title a { color: var(--fg); }
+a { color: var(--accent); }
+
+/* Cards / panels on the home + cards index. */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.card h3 { font-family: var(--font-head); font-weight: 700; }
+.card p  { color: var(--muted); }
+
+/* Graph view shell. */
+.graph-shell-header {
+  background: rgba(15,17,36,0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.graph-shell-header h2 { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.01em; }
+.graph-shell-header p  { color: var(--muted); }
+
+.graph-stage { background: transparent; }
+.graph-canvas-wrap { background: transparent; border-right: 1px solid var(--border); }
+#graph { background: transparent; }
+
+#directory-panel, #card-panel {
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+}
+#card-panel { border-left: 1px solid var(--border); border-right: 0; }
+
+/* Directory rows. */
+.directory-group > summary { color: var(--muted); }
+.directory-row:hover { background: rgba(255,255,255,0.04); }
+.directory-row.active { background: var(--accent); color: #0a0a14; }
+
+/* Search bar — frosted glass over the canvas. */
+.graph-searchbar #search-input {
+  background: rgba(15,17,36,0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+.graph-searchbar #search-input::placeholder { color: var(--fg-dim); }
+.graph-searchbar #search-input:focus { border-color: var(--accent); }
+#search-results {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+.search-result-item { color: var(--fg); border-bottom: 1px solid var(--border); }
+.search-result-item:hover, .search-result-item.active { background: rgba(255,255,255,0.04); }
+.search-result-slug, .search-result-type { color: var(--muted); }
+.search-result-slug { font-family: var(--font-mono); }
+
+/* Graph controls — frosted pill. */
+.graph-controls {
+  background: rgba(15,17,36,0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.gc-btn {
+  background: var(--card-bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.gc-btn:hover { background: var(--surface-alt); }
+.gc-toggle { color: var(--fg); border-left: 1px solid var(--border); }
+.gc-divider {
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+  vertical-align: middle;
+}
+.gc-spacing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  color: var(--fg);
+}
+.gc-spacing-icon { color: var(--muted); font-size: 12px; }
+.gc-spacing input[type="range"] {
+  width: 90px;
+  accent-color: var(--accent);
+  background: transparent;
+}
+.gc-spacing-value {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Panel collapse chevrons. */
+.panel-collapse-btn, .panel-expand-btn {
+  background: rgba(15,17,36,0.95);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.panel-collapse-btn:hover, .panel-expand-btn:hover { color: var(--fg); background: var(--card-bg); }
+
+/* Card detail panel. */
+.card-name { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.01em; }
+.card-type { color: var(--accent); font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.12em; }
+.card-fm dt { color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; }
+.card-fm dd { color: var(--fg); }
+.card-body { color: var(--fg); }
+.card-body a.wikilink { color: var(--accent); border-bottom-color: var(--accent); }
+
+.card-toolbar .card-edit-btn,
+.card-toolbar .card-note-btn {
+  background: var(--surface-alt);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.card-toolbar .card-edit-btn:hover,
+.card-toolbar .card-note-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* Persistent player. */
+.persistent-player {
+  background: rgba(10,10,20,0.94);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.persistent-player-label { color: var(--muted); }
+.persistent-player-title { color: var(--fg); font-family: var(--font-head); }
+
+/* Type badges (used on /cards index). Keep colors aligned to the neon palette. */
+.type-person   { background: var(--type-person); color: #0a0a14; border-color: transparent; }
+.type-group    { background: var(--type-group);  color: #0a0a14; border-color: transparent; }
+.type-album    { background: var(--type-album);  color: #0a0a14; border-color: transparent; }
+.type-track    { background: var(--type-track);  color: #0a0a14; border-color: transparent; }
+.type-song     { background: var(--type-song);   color: #0a0a14; border-color: transparent; }
+.type-location { background: var(--type-location); color: #0a0a14; border-color: transparent; }
+.type-genre    { background: var(--type-genre);    color: #0a0a14; border-color: transparent; }
+.type-note     { background: var(--type-note);     color: #0a0a14; border-color: transparent; }
+.type-memory   { background: var(--type-memory);   color: #0a0a14; border-color: transparent; }
+
+/* ── Home page ──────────────────────────────────────────────────────── */
+.home-page .container { max-width: 1100px; margin: 0 auto; padding: 0; }
+.home-hero { padding: 44px 32px 28px; }
+.home-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.home-headline {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 48px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  text-wrap: balance;
+}
+.home-subhead {
+  margin: 12px 0 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.home-section { padding: 20px 32px; }
+.home-section-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.featured-card {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 200ms cubic-bezier(.2,.7,.3,1), border-color 200ms;
+}
+.featured-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.featured-card-body { padding: 22px 24px 20px; display: flex; flex-direction: column; }
+.featured-card-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--fg);
+}
+.featured-card-desc { margin: 10px 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.featured-card-meta { display: flex; gap: 14px; margin-top: auto; align-items: center; flex-wrap: wrap; }
+.featured-stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.featured-stat-value { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--fg); }
+.featured-types { flex: 1; display: flex; gap: 4px; flex-wrap: wrap; min-width: 0; }
+.type-chip {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.featured-open {
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+}
+.featured-card-preview {
+  position: relative;
+  background: #0a0a14;
+  border-left: 1px solid var(--border);
+  min-height: 220px;
+  overflow: hidden;
+}
+.mini-graph-svg { width: 100%; height: 100%; display: block; }
+
+.home-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 800px) {
+  .home-grid { grid-template-columns: 1fr; }
+  .featured-card { grid-template-columns: 1fr; }
+}
+.graph-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 16px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 200ms cubic-bezier(.2,.7,.3,1), border-color 200ms;
+}
+.graph-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.graph-card-stripes { display: flex; gap: 4px; margin-bottom: 4px; min-height: 8px; }
+.type-stripe { width: 24px; height: 8px; border-radius: 2px; }
+.graph-card-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--fg);
+}
+.graph-card-desc { margin: 0; font-size: 12px; line-height: 1.45; color: var(--muted); }
+.graph-card-meta {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Note modal. */
+.note-modal-backdrop { background: rgba(0,0,0,0.65); }
+.note-modal-dialog {
+  background: var(--card-bg);
+  border: 1px solid var(--border-strong);
+  color: var(--fg);
+  border-radius: 10px;
+}
+.note-modal-title { font-family: var(--font-head); }
+.note-modal-source { color: var(--muted); font-family: var(--font-mono); }
+.note-modal-field input[type="text"], .note-modal-field textarea {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+.note-modal-field textarea { font-family: var(--font-mono); }
+.note-modal-create { background: var(--accent); border-color: var(--accent); color: #fff; }
+.note-modal-cancel { background: var(--surface-alt); color: var(--fg); border-color: var(--border); }

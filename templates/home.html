@@ -1,33 +1,266 @@
 {% extends "base.html" %}
 
 {% block title %}music graphs — home{% endblock %}
+{% block body_class %}home-page{% endblock %}
 
 {% block content %}
-<section class="intro">
-  <p>Browse curated music graphs. Each graph is a hand-authored set of cards connected by wikilinks.</p>
+<section class="home-hero">
+  <div class="home-eyebrow" id="home-eyebrow">
+    {{ graphs|length }} graphs
+  </div>
+  <h1 class="home-headline">Music, traced as graphs.</h1>
+  <p class="home-subhead">
+    Each graph is a curated set of cards — people, albums, songs, places — connected
+    by wikilinks and rendered as a force-directed canvas.
+  </p>
 </section>
 
-<section class="graph-list">
-  <h2>Graphs</h2>
-  {% if graphs %}
-  <ul class="cards">
-    {% for g in graphs %}
-    <li class="card">
-      {% if g.cover_image %}
-      <img class="cover" src="{{ g.cover_image }}" alt="">
-      {% endif %}
-      <h3><a href="/graph/{{ g.slug }}">{{ g.name }}</a></h3>
-      <p>{{ g.description }}</p>
-      <p class="card-meta">{{ g.card_count }} card{{ '' if g.card_count == 1 else 's' }}</p>
-    </li>
+{% if graphs %}
+{# Featured graph: prefer brad-mehldau-covers if present, else the graph with the most cards. #}
+{% set featured = namespace(g=none) %}
+{% for g in graphs if g.slug == 'brad-mehldau-covers' %}{% set featured.g = g %}{% endfor %}
+{% if featured.g is none %}
+  {% for g in graphs %}{% if featured.g is none or g.card_count > featured.g.card_count %}{% set featured.g = g %}{% endif %}{% endfor %}
+{% endif %}
+
+<section class="home-section">
+  <div class="home-section-label">Featured graph</div>
+  <a class="featured-card" href="/graph/{{ featured.g.slug }}" data-featured-slug="{{ featured.g.slug }}">
+    <div class="featured-card-body">
+      <h2 class="featured-card-title">{{ featured.g.name }}</h2>
+      <p class="featured-card-desc">{{ featured.g.description }}</p>
+      <div class="featured-card-meta">
+        <div class="featured-stat">
+          <div class="featured-stat-label">cards</div>
+          <div class="featured-stat-value">{{ featured.g.card_count }}</div>
+        </div>
+        <div class="featured-types" data-types-for="{{ featured.g.slug }}"></div>
+        <span class="featured-open">Open ↗</span>
+      </div>
+    </div>
+    <div class="featured-card-preview" data-mini-graph="{{ featured.g.slug }}">
+      <div class="mini-graph-placeholder"></div>
+    </div>
+  </a>
+</section>
+
+{% set rest = graphs|rejectattr('slug', 'equalto', featured.g.slug)|list %}
+{% if rest %}
+<section class="home-section">
+  <div class="home-section-label">More graphs</div>
+  <div class="home-grid">
+    {% for g in rest %}
+    <a class="graph-card" href="/graph/{{ g.slug }}" data-grid-slug="{{ g.slug }}">
+      <div class="graph-card-stripes" data-stripes-for="{{ g.slug }}"></div>
+      <h3 class="graph-card-title">{{ g.name }}</h3>
+      <p class="graph-card-desc">{{ g.description }}</p>
+      <div class="graph-card-meta" data-meta-for="{{ g.slug }}">{{ g.card_count }} cards</div>
+    </a>
     {% endfor %}
-  </ul>
-  {% else %}
-  <p>No graphs found.</p>
-  {% endif %}
+  </div>
 </section>
+{% endif %}
 
-<section class="links">
-  <p><a href="/cards">Browse all cards</a></p>
+{% else %}
+<section class="home-section">
+  <p class="muted">No graphs found.</p>
 </section>
+{% endif %}
+
+<script>
+(function () {
+  "use strict";
+
+  const TYPE_COLOR = {
+    person:   "#5dd4ff",
+    group:    "#ff5fb8",
+    album:    "#9bff5f",
+    track:    "#ffd34d",
+    song:     "#c590ff",
+    location: "#ff8a3d",
+    genre:    "#b39dff",
+    note:     "#ffe066",
+    memory:   "#ff5b6e",
+  };
+
+  function fetchJSON(url) {
+    return fetch(url).then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)));
+  }
+
+  // ── Per-graph type list (for featured chips + grid stripes + total cards) ──
+  function loadTypes(slug) {
+    return fetchJSON("/api/cards/" + encodeURIComponent(slug)).then(cards => {
+      const types = [];
+      const seen = new Set();
+      for (const c of cards) {
+        if (c.type && !seen.has(c.type)) { seen.add(c.type); types.push(c.type); }
+      }
+      return { types, count: cards.length };
+    });
+  }
+
+  // Total card count across all graphs in the eyebrow.
+  const gridLinks = document.querySelectorAll("[data-grid-slug]");
+  const featuredLink = document.querySelector(".featured-card");
+  const slugs = [];
+  if (featuredLink) slugs.push(featuredLink.getAttribute("data-featured-slug"));
+  gridLinks.forEach(el => slugs.push(el.getAttribute("data-grid-slug")));
+
+  let totalCards = 0;
+  Promise.all(slugs.map(s => loadTypes(s).then(r => ({ slug: s, ...r })).catch(() => null)))
+    .then(results => {
+      results.forEach(res => {
+        if (!res) return;
+        totalCards += res.count;
+
+        // Featured types chips.
+        if (featuredLink && featuredLink.getAttribute("data-featured-slug") === res.slug) {
+          const chips = featuredLink.querySelector("[data-types-for]");
+          if (chips) {
+            chips.innerHTML = res.types.slice(0, 6).map(t =>
+              `<span class="type-chip" style="background:${TYPE_COLOR[t] || "#7c5cff"};color:#0a0a14">${t}</span>`
+            ).join("");
+          }
+        }
+
+        // Grid stripes.
+        const grid = document.querySelector(`[data-stripes-for="${res.slug}"]`);
+        if (grid) {
+          grid.innerHTML = res.types.slice(0, 5).map(t =>
+            `<span class="type-stripe" style="background:${TYPE_COLOR[t] || "#7c5cff"}"></span>`
+          ).join("");
+        }
+
+        const meta = document.querySelector(`[data-meta-for="${res.slug}"]`);
+        if (meta) meta.textContent = `${res.count} cards · ${res.types.length} types`;
+      });
+
+      const eyebrow = document.getElementById("home-eyebrow");
+      if (eyebrow && totalCards > 0) {
+        const n = document.querySelectorAll("[data-grid-slug], [data-featured-slug]").length;
+        eyebrow.textContent = `${n} graph${n === 1 ? "" : "s"} · ${totalCards} cards`;
+      }
+    });
+
+  // ── Mini-graph preview (featured) ────────────────────────────────────────
+  // Build a static SVG snapshot using real nodes + edges from /api/graph/<slug>.
+  // Layout: pick the highest-degree node as the hub, sample up to ~14 neighbors,
+  // place hub in the center and neighbors on a circle.
+  const previewMount = document.querySelector("[data-mini-graph]");
+  if (previewMount) {
+    const slug = previewMount.getAttribute("data-mini-graph");
+    fetchJSON("/api/graph/" + encodeURIComponent(slug))
+      .then(data => renderMiniGraph(previewMount, slug, data))
+      .catch(() => { previewMount.querySelector(".mini-graph-placeholder")?.remove(); });
+  }
+
+  function renderMiniGraph(mount, slug, data) {
+    const nodes = data.nodes || [];
+    const edges = data.edges || [];
+    if (!nodes.length) return;
+
+    // Degree map to pick the hub.
+    const deg = new Map();
+    for (const e of edges) {
+      deg.set(e.from, (deg.get(e.from) || 0) + 1);
+      deg.set(e.to,   (deg.get(e.to)   || 0) + 1);
+    }
+    let hubId = nodes[0].id;
+    let hubDeg = -1;
+    for (const n of nodes) {
+      const d = deg.get(n.id) || 0;
+      if (d > hubDeg) { hubDeg = d; hubId = n.id; }
+    }
+
+    // Collect direct neighbors of the hub.
+    const neighborSet = new Set();
+    for (const e of edges) {
+      if (e.from === hubId) neighborSet.add(e.to);
+      else if (e.to === hubId) neighborSet.add(e.from);
+    }
+    const neighbors = Array.from(neighborSet).slice(0, 14);
+    const includeIds = new Set([hubId, ...neighbors]);
+    const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+    // Position: hub in center, neighbors on a circle. Add a few cross-edges
+    // among neighbors when they exist in the real edge list.
+    const W = 100, H = 100;
+    const pos = new Map();
+    pos.set(hubId, { x: W * 0.5, y: H * 0.5 });
+    const R = 36;
+    neighbors.forEach((id, i) => {
+      const a = (i / Math.max(1, neighbors.length)) * Math.PI * 2 - Math.PI / 2;
+      pos.set(id, { x: 50 + Math.cos(a) * R, y: 50 + Math.sin(a) * R });
+    });
+
+    // Edges to draw: hub→neighbor + any neighbor↔neighbor present in real data.
+    const drawEdges = [];
+    for (const e of edges) {
+      if (!includeIds.has(e.from) || !includeIds.has(e.to)) continue;
+      drawEdges.push(e);
+    }
+
+    function typeOf(id) {
+      const n = nodeById.get(id);
+      return (n && n.group) || (id.split(":")[0] || "person");
+    }
+
+    const svgNs = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNs, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.setAttribute("class", "mini-graph-svg");
+
+    const defs = document.createElementNS(svgNs, "defs");
+    svg.appendChild(defs);
+
+    drawEdges.forEach((e, i) => {
+      const a = pos.get(e.from), b = pos.get(e.to);
+      if (!a || !b) return;
+      const ca = TYPE_COLOR[typeOf(e.from)] || "#7c5cff";
+      const cb = TYPE_COLOR[typeOf(e.to)] || "#7c5cff";
+      const gid = `mp-${slug.replace(/[^a-z0-9]/gi, "_")}-${i}`;
+      const grad = document.createElementNS(svgNs, "linearGradient");
+      grad.setAttribute("id", gid);
+      grad.setAttribute("gradientUnits", "userSpaceOnUse");
+      grad.setAttribute("x1", a.x); grad.setAttribute("y1", a.y);
+      grad.setAttribute("x2", b.x); grad.setAttribute("y2", b.y);
+      const s0 = document.createElementNS(svgNs, "stop");
+      s0.setAttribute("offset", "0%"); s0.setAttribute("stop-color", ca);
+      const s1 = document.createElementNS(svgNs, "stop");
+      s1.setAttribute("offset", "100%"); s1.setAttribute("stop-color", cb);
+      grad.appendChild(s0); grad.appendChild(s1);
+      defs.appendChild(grad);
+
+      const line = document.createElementNS(svgNs, "line");
+      line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+      line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+      line.setAttribute("stroke", `url(#${gid})`);
+      line.setAttribute("stroke-width", "0.55");
+      line.setAttribute("opacity", "0.85");
+      svg.appendChild(line);
+    });
+
+    // Nodes — small rounded rect tiles tinted by type color.
+    pos.forEach((p, id) => {
+      const isHub = id === hubId;
+      const r = isHub ? 3.4 : 2.4;
+      const rect = document.createElementNS(svgNs, "rect");
+      rect.setAttribute("x", p.x - r);
+      rect.setAttribute("y", p.y - r * 0.7);
+      rect.setAttribute("width", r * 2);
+      rect.setAttribute("height", r * 1.4);
+      rect.setAttribute("rx", "0.6");
+      rect.setAttribute("fill", TYPE_COLOR[typeOf(id)] || "#7c5cff");
+      rect.setAttribute("stroke", "rgba(0,0,0,0.4)");
+      rect.setAttribute("stroke-width", "0.2");
+      svg.appendChild(rect);
+    });
+
+    const ph = mount.querySelector(".mini-graph-placeholder");
+    if (ph) ph.remove();
+    mount.appendChild(svg);
+  }
+})();
+</script>
 {% endblock %}
