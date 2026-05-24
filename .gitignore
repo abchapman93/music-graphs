@@ -12,3 +12,6 @@ venv/
 dist/
 build/
 .claude/worktrees/
+
+# Static-site build output (rebuilt by .github/workflows/pages.yml on push).
+_site/

@@ -6,6 +6,12 @@
       "runtimeExecutable": ".venv/bin/python",
       "runtimeArgs": ["-m", "flask", "--app", "app", "run", "--port", "5057", "--debug"],
       "port": 5057
+    },
+    {
+      "name": "static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5099", "--directory", "_site"],
+      "port": 5099
     }
   ]
 }

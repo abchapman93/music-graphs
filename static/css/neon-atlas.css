@@ -345,6 +345,11 @@ a { color: var(--accent); }
   letter-spacing: 0.08em;
 }
 
+/* Static-build mode: no Flask backend, so hide write-only UI. */
+body.mg-static .card-edit-btn,
+body.mg-static .card-note-btn,
+body.mg-static .note-modal { display: none !important; }
+
 /* Note modal. */
 .note-modal-backdrop { background: rgba(0,0,0,0.65); }
 .note-modal-dialog {

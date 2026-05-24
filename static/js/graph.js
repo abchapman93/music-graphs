@@ -5,6 +5,14 @@
   "use strict";
 
   const SLUG = window.GRAPH_SLUG;
+  // Static-build mode: when MG_STATIC is set, API endpoints live as .json
+  // files under a build-time base path (e.g., "/music-graphs"). Write-only
+  // endpoints (PUT/POST) don't exist, so edit + new-note UIs are hidden.
+  const MG_STATIC = !!window.MG_STATIC;
+  const MG_BASE = (window.MG_BASE || "").replace(/\/+$/, "");
+  const J = MG_STATIC ? ".json" : "";
+  function api(path) { return MG_BASE + path + J; }
+  if (MG_STATIC) document.body.classList.add("mg-static");
   const graphMount = document.getElementById("graph");
   const panel = document.getElementById("card-panel-content");
   const directoryPanel = document.getElementById("directory-panel-content");
@@ -560,7 +568,7 @@
     // Dismiss saved-notice and exit edit mode when switching cards.
     savedNotice = false;
     editing = false;
-    fetch(`/api/card/${encodeURIComponent(SLUG)}/${encodeURIComponent(cardSlug)}`)
+    fetch(api(`/api/card/${encodeURIComponent(SLUG)}/${encodeURIComponent(cardSlug)}`))
       .then(r => {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
@@ -792,7 +800,7 @@
   }
 
   function loadCardIndex() {
-    return fetch(`/api/cards/${encodeURIComponent(SLUG)}`)
+    return fetch(api(`/api/cards/${encodeURIComponent(SLUG)}`))
       .then(r => {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
@@ -1088,7 +1096,7 @@
   }
 
   function refreshGraph() {
-    return fetch(`/api/graph/${encodeURIComponent(SLUG)}`)
+    return fetch(MG_BASE + `/api/graph/${encodeURIComponent(SLUG)}` + J)
       .then(r => {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
@@ -1306,7 +1314,7 @@
   wireDirectory();
   loadCardIndex();
 
-  fetch(`/api/graph/${encodeURIComponent(SLUG)}`)
+  fetch(api(`/api/graph/${encodeURIComponent(SLUG)}`))
     .then(r => {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();

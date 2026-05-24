@@ -71,6 +71,11 @@
 (function () {
   "use strict";
 
+  const MG_STATIC = !!window.MG_STATIC;
+  const MG_BASE = (window.MG_BASE || "").replace(/\/+$/, "");
+  const J = MG_STATIC ? ".json" : "";
+  if (MG_STATIC) document.body.classList.add("mg-static");
+
   const TYPE_COLOR = {
     person:   "#5dd4ff",
     group:    "#ff5fb8",
@@ -89,7 +94,7 @@
 
   // ── Per-graph type list (for featured chips + grid stripes + total cards) ──
   function loadTypes(slug) {
-    return fetchJSON("/api/cards/" + encodeURIComponent(slug)).then(cards => {
+    return fetchJSON(MG_BASE + "/api/cards/" + encodeURIComponent(slug) + J).then(cards => {
       const types = [];
       const seen = new Set();
       for (const c of cards) {
@@ -149,7 +154,7 @@
   const previewMount = document.querySelector("[data-mini-graph]");
   if (previewMount) {
     const slug = previewMount.getAttribute("data-mini-graph");
-    fetchJSON("/api/graph/" + encodeURIComponent(slug))
+    fetchJSON(MG_BASE + "/api/graph/" + encodeURIComponent(slug) + J)
       .then(data => renderMiniGraph(previewMount, slug, data))
       .catch(() => { previewMount.querySelector(".mini-graph-placeholder")?.remove(); });
   }
