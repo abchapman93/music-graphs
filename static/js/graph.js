@@ -21,7 +21,9 @@
   const searchInput = document.getElementById("search-input");
   const searchResults = document.getElementById("search-results");
 
-  // Type → background color (Neon Atlas palette, parallel to CSS --type-* tokens).
+  // Type → background color. Defaults match the Neon Atlas palette but
+  // every value is re-read from CSS custom properties on theme change so
+  // Liner Notes / Color Atlas swap correctly.
   const TYPE_COLOR = {
     person:   "#5dd4ff",
     group:    "#ff5fb8",
@@ -33,6 +35,31 @@
     note:     "#ffe066",
     memory:   "#ff5b6e",
   };
+  const THEME = {
+    surface: "#0f1124",
+    fg: "#f0f1ff",
+    muted: "rgba(220,225,255,0.62)",
+    borderHover: "rgba(160,170,220,0.55)",
+    borderIdle:  "rgba(120,130,180,0.35)",
+  };
+  function readThemeColors() {
+    const cs = getComputedStyle(document.body);
+    Object.keys(TYPE_COLOR).forEach(t => {
+      const v = cs.getPropertyValue("--type-" + t).trim();
+      if (v) TYPE_COLOR[t] = v;
+    });
+    const surface = cs.getPropertyValue("--card-bg").trim();
+    const fg = cs.getPropertyValue("--fg").trim();
+    const muted = cs.getPropertyValue("--muted").trim();
+    const border = cs.getPropertyValue("--border").trim();
+    const borderStrong = cs.getPropertyValue("--border-strong").trim();
+    if (surface) THEME.surface = surface;
+    if (fg) THEME.fg = fg;
+    if (muted) THEME.muted = muted;
+    if (border) THEME.borderIdle = border;
+    if (borderStrong) THEME.borderHover = borderStrong;
+  }
+  readThemeColors();
 
   // ── Mini-card SVG node renderer ────────────────────────────────────────
   // Each node is drawn as a tiny rounded rectangle "card" with a type-colored
@@ -71,9 +98,9 @@
     if (state.selected) {
       outline = color; outlineW = 3;
     } else if (state.hovered) {
-      outline = "rgba(160,170,220,0.55)"; outlineW = 2;
+      outline = THEME.borderHover; outlineW = 2;
     } else {
-      outline = "rgba(120,130,180,0.35)"; outlineW = 1;
+      outline = THEME.borderIdle; outlineW = 1;
     }
     const coverSize = h - 6;
     const labelX = coverSize + 9;
@@ -88,11 +115,11 @@
     const svg =
       `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
       `<rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="8" ry="8" ` +
-        `fill="#0f1124" stroke="${outline}" stroke-width="${outlineW}"/>` +
+        `fill="${THEME.surface}" stroke="${outline}" stroke-width="${outlineW}"/>` +
       `<rect x="3" y="3" width="${coverSize}" height="${coverSize}" rx="5" ry="5" fill="${color}"/>` +
-      `<text x="${labelX}" y="${nameY}" fill="#f0f1ff" ` +
+      `<text x="${labelX}" y="${nameY}" fill="${THEME.fg}" ` +
         `font-family="Inter, Helvetica Neue, sans-serif" font-size="${nameSize}" font-weight="600">${safeName}</text>` +
-      `<text x="${labelX}" y="${typeY}" fill="rgba(220,225,255,0.62)" ` +
+      `<text x="${labelX}" y="${typeY}" fill="${THEME.muted}" ` +
         `font-family="JetBrains Mono, monospace" font-size="${typeSize}" letter-spacing="0.6">${safeType}</text>` +
       `</svg>`;
 
@@ -1448,4 +1475,15 @@
     .catch(e => {
       graphMount.innerHTML = `<p class="muted">Failed to load graph: ${escapeText(e.message)}</p>`;
     });
+
+  // Theme switch: re-read tokens, invalidate caches, and re-render anything
+  // that bakes color values into SVG/DOM strings.
+  window.addEventListener("mg-theme-change", () => {
+    readThemeColors();
+    nodeImageCache.clear();
+    refreshAllNodeImages();
+    recomputeEdgeColors();
+    scheduleEdgeRedraw();
+    if (cardIndex && cardIndex.length) renderDirectory();
+  });
 })();

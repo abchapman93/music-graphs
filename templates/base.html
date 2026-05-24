@@ -6,10 +6,67 @@
   <title>{% block title %}music graphs{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/neon-atlas.css">
+  <script>
+    // Apply persisted theme before paint to avoid FOUC. Default is Liner Notes.
+    (function () {
+      try {
+        var t = localStorage.getItem("mg-theme") || "liner";
+        if (t === "liner" || t === "atlas") {
+          document.documentElement.classList.add("theme-" + t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    // Move the theme class from <html> to <body> once <body> exists, then
+    // wire the theme picker. Dispatches `mg-theme-change` for downstream JS.
+    document.addEventListener("DOMContentLoaded", function () {
+      var html = document.documentElement;
+      ["theme-liner", "theme-atlas"].forEach(function (cls) {
+        if (html.classList.contains(cls)) {
+          document.body.classList.add(cls);
+          html.classList.remove(cls);
+        }
+      });
+      function current() {
+        if (document.body.classList.contains("theme-liner")) return "liner";
+        if (document.body.classList.contains("theme-atlas")) return "atlas";
+        return "neon";
+      }
+      function syncPicker() {
+        var cur = current();
+        document.querySelectorAll(".theme-picker-btn").forEach(function (btn) {
+          btn.setAttribute("aria-pressed", btn.getAttribute("data-theme") === cur ? "true" : "false");
+        });
+      }
+      function setTheme(t) {
+        document.body.classList.remove("theme-liner", "theme-atlas");
+        if (t === "liner" || t === "atlas") document.body.classList.add("theme-" + t);
+        try { localStorage.setItem("mg-theme", t); } catch (e) {}
+        syncPicker();
+        window.dispatchEvent(new CustomEvent("mg-theme-change", { detail: { theme: t } }));
+      }
+      syncPicker();
+      document.querySelectorAll(".theme-picker-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () { setTheme(btn.getAttribute("data-theme")); });
+      });
+    });
+  </script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header class="site-header">
     <h1 class="site-title"><a href="/">music graphs</a></h1>
+    <nav class="theme-picker" role="group" aria-label="Theme">
+      <button type="button" class="theme-picker-btn" data-theme="neon" aria-pressed="false">
+        <span class="theme-picker-dot" aria-hidden="true"></span>Neon Atlas
+      </button>
+      <button type="button" class="theme-picker-btn" data-theme="liner" aria-pressed="true">
+        <span class="theme-picker-dot" aria-hidden="true"></span>Liner Notes
+      </button>
+      <button type="button" class="theme-picker-btn" data-theme="atlas" aria-pressed="false">
+        <span class="theme-picker-dot" aria-hidden="true"></span>Color Atlas
+      </button>
+    </nav>
   </header>
   <main class="container">
     {% block content %}{% endblock %}

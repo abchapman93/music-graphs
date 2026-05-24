@@ -11,7 +11,7 @@
    rendering — for that, see graph.js patches in the README.
    ───────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Archivo:wght@500;700;800&display=swap');
 
 :root {
   /* ── Surface ─────────────────────────────────────────────────────── */
@@ -21,6 +21,8 @@
   --card-bg: #0f1124;
   --border: rgba(120,130,180,0.18);
   --accent: #7c5cff;
+  /* Foreground color used on top of type-color swatches. */
+  --on-type: #0a0a14;
 
   /* ── Neon Atlas type-color tokens ───────────────────────────────── */
   --type-person: #5dd4ff;
@@ -94,7 +96,7 @@ a { color: var(--accent); }
 /* Directory rows. */
 .directory-group > summary { color: var(--muted); }
 .directory-row:hover { background: rgba(255,255,255,0.04); }
-.directory-row.active { background: var(--accent); color: #0a0a14; }
+.directory-row.active { background: var(--accent); color: var(--on-type); }
 
 /* Search bar — frosted glass over the canvas. */
 .graph-searchbar #search-input {
@@ -196,16 +198,16 @@ a { color: var(--accent); }
 .persistent-player-label { color: var(--muted); }
 .persistent-player-title { color: var(--fg); font-family: var(--font-head); }
 
-/* Type badges (used on /cards index). Keep colors aligned to the neon palette. */
-.type-person   { background: var(--type-person); color: #0a0a14; border-color: transparent; }
-.type-group    { background: var(--type-group);  color: #0a0a14; border-color: transparent; }
-.type-album    { background: var(--type-album);  color: #0a0a14; border-color: transparent; }
-.type-track    { background: var(--type-track);  color: #0a0a14; border-color: transparent; }
-.type-song     { background: var(--type-song);   color: #0a0a14; border-color: transparent; }
-.type-location { background: var(--type-location); color: #0a0a14; border-color: transparent; }
-.type-genre    { background: var(--type-genre);    color: #0a0a14; border-color: transparent; }
-.type-note     { background: var(--type-note);     color: #0a0a14; border-color: transparent; }
-.type-memory   { background: var(--type-memory);   color: #0a0a14; border-color: transparent; }
+/* Type badges (used on /cards index). Colors derive from theme tokens. */
+.type-person   { background: var(--type-person); color: var(--on-type); border-color: transparent; }
+.type-group    { background: var(--type-group);  color: var(--on-type); border-color: transparent; }
+.type-album    { background: var(--type-album);  color: var(--on-type); border-color: transparent; }
+.type-track    { background: var(--type-track);  color: var(--on-type); border-color: transparent; }
+.type-song     { background: var(--type-song);   color: var(--on-type); border-color: transparent; }
+.type-location { background: var(--type-location); color: var(--on-type); border-color: transparent; }
+.type-genre    { background: var(--type-genre);    color: var(--on-type); border-color: transparent; }
+.type-note     { background: var(--type-note);     color: var(--on-type); border-color: transparent; }
+.type-memory   { background: var(--type-memory);   color: var(--on-type); border-color: transparent; }
 
 /* ── Home page ──────────────────────────────────────────────────────── */
 .home-page .container { max-width: 1100px; margin: 0 auto; padding: 0; }
@@ -300,7 +302,7 @@ a { color: var(--accent); }
 }
 .featured-card-preview {
   position: relative;
-  background: #0a0a14;
+  background: var(--bg);
   border-left: 1px solid var(--border);
   min-height: 220px;
   overflow: hidden;
@@ -369,3 +371,184 @@ body.mg-static .note-modal { display: none !important; }
 .note-modal-field textarea { font-family: var(--font-mono); }
 .note-modal-create { background: var(--accent); border-color: var(--accent); color: #fff; }
 .note-modal-cancel { background: var(--surface-alt); color: var(--fg); border-color: var(--border); }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Theme picker (segmented pill control, lives in the site-header)
+   ───────────────────────────────────────────────────────────────────── */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.theme-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.theme-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.theme-picker-btn:hover { color: var(--fg); }
+.theme-picker-btn[aria-pressed="true"] {
+  background: var(--card-bg);
+  color: var(--fg);
+  box-shadow: 0 1px 0 var(--border);
+}
+.theme-picker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  display: inline-block;
+}
+.theme-picker-btn[aria-pressed="true"] .theme-picker-dot {
+  box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 3px var(--accent);
+}
+.theme-picker-btn[data-theme="neon"]  .theme-picker-dot { background: #7c5cff; }
+.theme-picker-btn[data-theme="liner"] .theme-picker-dot { background: #b8331c; }
+.theme-picker-btn[data-theme="atlas"] .theme-picker-dot { background: #ff4d2e; }
+
+/* Smooth theme switch — fade the page background. */
+body { transition: background-color 200ms ease, color 200ms ease; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Liner Notes — paper editorial, warm cream + ink type-color stamps
+   ───────────────────────────────────────────────────────────────────── */
+.theme-liner {
+  --fg: #1c150e;
+  --muted: rgba(28,21,14,0.62);
+  --fg-dim: rgba(28,21,14,0.42);
+  --bg: #f6efe4;
+  --card-bg: #fbf6ec;
+  --surface-alt: #f1e7d2;
+  --border: rgba(60,40,20,0.18);
+  --border-strong: rgba(60,40,20,0.45);
+  --accent: #b8331c;
+  --on-type: #fbf6ec;
+  --type-person:   #b8331c;
+  --type-group:    #1f3a8a;
+  --type-album:    #c98a1a;
+  --type-track:    #3f6b1f;
+  --type-song:     #6b2a8c;
+  --type-location: #b8331c;
+  --type-genre:    #6b2a8c;
+  --type-note:     #c98a1a;
+  --type-memory:   #b8331c;
+  --font-head: 'Fraunces', 'Times New Roman', serif;
+  background: radial-gradient(ellipse at 80% 0%, #fff7e9 0%, #f6efe4 60%, #ecdfca 100%);
+}
+.theme-liner .site-header,
+.theme-liner .graph-shell-header {
+  background: rgba(251,246,236,0.78);
+  border-bottom: 1px solid var(--border);
+}
+.theme-liner .persistent-player {
+  background: rgba(251,246,236,0.96);
+  box-shadow: 0 -2px 12px rgba(60,40,20,0.12);
+}
+.theme-liner .graph-searchbar #search-input,
+.theme-liner .graph-controls,
+.theme-liner .panel-collapse-btn,
+.theme-liner .panel-expand-btn {
+  background: rgba(251,246,236,0.92);
+}
+.theme-liner .featured-card,
+.theme-liner .graph-card,
+.theme-liner .card,
+.theme-liner #directory-panel,
+.theme-liner #card-panel,
+.theme-liner .note-modal-dialog,
+.theme-liner #search-results {
+  background: var(--card-bg);
+}
+.theme-liner .directory-row:hover { background: rgba(60,40,20,0.06); }
+.theme-liner .search-result-item:hover,
+.theme-liner .search-result-item.active { background: rgba(60,40,20,0.06); }
+.theme-liner .featured-open,
+.theme-liner .note-modal-create { color: #fbf6ec; }
+.theme-liner .home-headline,
+.theme-liner .featured-card-title { font-weight: 700; letter-spacing: -0.01em; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Color Atlas — Bauhaus, blocky, oversized type, hard borders
+   ───────────────────────────────────────────────────────────────────── */
+.theme-atlas {
+  --fg: #0c0c0c;
+  --muted: rgba(12,12,12,0.62);
+  --fg-dim: rgba(12,12,12,0.45);
+  --bg: #f4f3ee;
+  --card-bg: #ffffff;
+  --surface-alt: #f0efe7;
+  --border: #1c1c1c;
+  --border-strong: #1c1c1c;
+  --accent: #ff4d2e;
+  --on-type: #0c0c0c;
+  --type-person:   #ff4d2e;
+  --type-group:    #0046ff;
+  --type-album:    #ffd000;
+  --type-track:    #00b35a;
+  --type-song:     #7a3aff;
+  --type-location: #ff4d2e;
+  --type-genre:    #7a3aff;
+  --type-note:     #ffd000;
+  --type-memory:   #ff4d2e;
+  --font-head: 'Archivo', 'Helvetica Neue', sans-serif;
+  background: linear-gradient(180deg, #fafaf6 0%, #ececdf 100%);
+}
+/* Sharp corners + hard 1px borders throughout. */
+.theme-atlas .card,
+.theme-atlas .featured-card,
+.theme-atlas .graph-card,
+.theme-atlas .note-modal-dialog,
+.theme-atlas .persistent-player,
+.theme-atlas .graph-controls,
+.theme-atlas #search-results,
+.theme-atlas .graph-searchbar #search-input,
+.theme-atlas .gc-btn,
+.theme-atlas .featured-open,
+.theme-atlas .panel-collapse-btn,
+.theme-atlas .panel-expand-btn,
+.theme-atlas .theme-picker,
+.theme-atlas .theme-picker-btn,
+.theme-atlas .theme-picker-btn[aria-pressed="true"] { border-radius: 0; }
+.theme-atlas .featured-card,
+.theme-atlas .graph-card,
+.theme-atlas .card,
+.theme-atlas .note-modal-dialog,
+.theme-atlas .persistent-player { border-width: 1px; }
+.theme-atlas .site-header,
+.theme-atlas .graph-shell-header {
+  background: rgba(255,255,255,0.85);
+  border-bottom: 1px solid var(--border);
+}
+.theme-atlas .graph-searchbar #search-input,
+.theme-atlas .graph-controls,
+.theme-atlas .panel-collapse-btn,
+.theme-atlas .panel-expand-btn,
+.theme-atlas #directory-panel,
+.theme-atlas #card-panel { background: #ffffff; }
+.theme-atlas .directory-row:hover { background: rgba(12,12,12,0.05); }
+.theme-atlas .search-result-item:hover,
+.theme-atlas .search-result-item.active { background: rgba(12,12,12,0.05); }
+.theme-atlas .home-headline,
+.theme-atlas .featured-card-title { font-weight: 800; letter-spacing: -0.025em; }
+.theme-atlas .featured-open,
+.theme-atlas .note-modal-create { color: #ffffff; }

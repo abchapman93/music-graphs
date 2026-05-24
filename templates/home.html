@@ -87,6 +87,17 @@
     note:     "#ffe066",
     memory:   "#ff5b6e",
   };
+  let ON_TYPE = "#0a0a14";
+  function readThemeColors() {
+    const cs = getComputedStyle(document.body);
+    Object.keys(TYPE_COLOR).forEach(t => {
+      const v = cs.getPropertyValue("--type-" + t).trim();
+      if (v) TYPE_COLOR[t] = v;
+    });
+    const ot = cs.getPropertyValue("--on-type").trim();
+    if (ot) ON_TYPE = ot;
+  }
+  readThemeColors();
 
   function fetchJSON(url) {
     return fetch(url).then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)));
@@ -111,35 +122,39 @@
   if (featuredLink) slugs.push(featuredLink.getAttribute("data-featured-slug"));
   gridLinks.forEach(el => slugs.push(el.getAttribute("data-grid-slug")));
 
+  // Keep results around so we can re-render on theme change.
+  let typeResults = [];
+  function renderTypeChrome() {
+    typeResults.forEach(res => {
+      if (!res) return;
+      if (featuredLink && featuredLink.getAttribute("data-featured-slug") === res.slug) {
+        const chips = featuredLink.querySelector("[data-types-for]");
+        if (chips) {
+          chips.innerHTML = res.types.slice(0, 6).map(t =>
+            `<span class="type-chip" style="background:${TYPE_COLOR[t] || "#7c5cff"};color:${ON_TYPE}">${t}</span>`
+          ).join("");
+        }
+      }
+      const grid = document.querySelector(`[data-stripes-for="${res.slug}"]`);
+      if (grid) {
+        grid.innerHTML = res.types.slice(0, 5).map(t =>
+          `<span class="type-stripe" style="background:${TYPE_COLOR[t] || "#7c5cff"}"></span>`
+        ).join("");
+      }
+    });
+  }
+
   let totalCards = 0;
   Promise.all(slugs.map(s => loadTypes(s).then(r => ({ slug: s, ...r })).catch(() => null)))
     .then(results => {
+      typeResults = results;
       results.forEach(res => {
         if (!res) return;
         totalCards += res.count;
-
-        // Featured types chips.
-        if (featuredLink && featuredLink.getAttribute("data-featured-slug") === res.slug) {
-          const chips = featuredLink.querySelector("[data-types-for]");
-          if (chips) {
-            chips.innerHTML = res.types.slice(0, 6).map(t =>
-              `<span class="type-chip" style="background:${TYPE_COLOR[t] || "#7c5cff"};color:#0a0a14">${t}</span>`
-            ).join("");
-          }
-        }
-
-        // Grid stripes.
-        const grid = document.querySelector(`[data-stripes-for="${res.slug}"]`);
-        if (grid) {
-          grid.innerHTML = res.types.slice(0, 5).map(t =>
-            `<span class="type-stripe" style="background:${TYPE_COLOR[t] || "#7c5cff"}"></span>`
-          ).join("");
-        }
-
         const meta = document.querySelector(`[data-meta-for="${res.slug}"]`);
         if (meta) meta.textContent = `${res.count} cards · ${res.types.length} types`;
       });
-
+      renderTypeChrome();
       const eyebrow = document.getElementById("home-eyebrow");
       if (eyebrow && totalCards > 0) {
         const n = document.querySelectorAll("[data-grid-slug], [data-featured-slug]").length;
@@ -152,12 +167,25 @@
   // Layout: pick the highest-degree node as the hub, sample up to ~14 neighbors,
   // place hub in the center and neighbors on a circle.
   const previewMount = document.querySelector("[data-mini-graph]");
+  let previewData = null;
+  let previewSlug = null;
   if (previewMount) {
-    const slug = previewMount.getAttribute("data-mini-graph");
-    fetchJSON(MG_BASE + "/api/graph/" + encodeURIComponent(slug) + J)
-      .then(data => renderMiniGraph(previewMount, slug, data))
+    previewSlug = previewMount.getAttribute("data-mini-graph");
+    fetchJSON(MG_BASE + "/api/graph/" + encodeURIComponent(previewSlug) + J)
+      .then(data => { previewData = data; renderMiniGraph(previewMount, previewSlug, data); })
       .catch(() => { previewMount.querySelector(".mini-graph-placeholder")?.remove(); });
   }
+
+  // Theme switch: re-read tokens and re-render anything that bakes color
+  // values into inline styles / SVG attrs.
+  window.addEventListener("mg-theme-change", () => {
+    readThemeColors();
+    renderTypeChrome();
+    if (previewMount && previewData) {
+      previewMount.querySelectorAll("svg").forEach(el => el.remove());
+      renderMiniGraph(previewMount, previewSlug, previewData);
+    }
+  });
 
   function renderMiniGraph(mount, slug, data) {
     const nodes = data.nodes || [];
