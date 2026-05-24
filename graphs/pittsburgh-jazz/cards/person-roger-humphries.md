@@ -10,4 +10,4 @@ Roger Humphries is an American jazz drummer born and raised in [[location:pittsb
 
 Roger Humphries appears on [[album:song-for-my-father|Song for My Father]].
 
-Roger Humphries recorded [[album:keep-the-faith|Keep the Faith]].
+Roger Humphries recorded [[album:keep-the-faith|Keep the Faith]], which features bassist [[person:dwayne-dolphin|Dwayne Dolphin]] and includes the track [[track:dad|Dad]] written by drummer [[person:george-heid-iii|George Heid III]].
