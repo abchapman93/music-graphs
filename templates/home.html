@@ -16,9 +16,9 @@
 </section>
 
 {% if graphs %}
-{# Featured graph: prefer brad-mehldau-covers if present, else the graph with the most cards. #}
+{# Featured graph: prefer band-x if present, else the graph with the most cards. #}
 {% set featured = namespace(g=none) %}
-{% for g in graphs if g.slug == 'brad-mehldau-covers' %}{% set featured.g = g %}{% endfor %}
+{% for g in graphs if g.slug == 'band-x' %}{% set featured.g = g %}{% endfor %}
 {% if featured.g is none %}
   {% for g in graphs %}{% if featured.g is none or g.card_count > featured.g.card_count %}{% set featured.g = g %}{% endif %}{% endfor %}
 {% endif %}
